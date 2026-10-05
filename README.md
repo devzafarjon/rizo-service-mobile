@@ -75,8 +75,9 @@ cd ../rizo_customer && flutter analyze && flutter test
 ## Still to do by hand (needs your accounts)
 
 * **Store accounts**: Apple Developer Program (99 USD / year) and Google Play Console (25 USD once).
-* **App icon and splash**: the Flutter default is used until you provide a square icon (1024 × 1024).
-  `flutter_launcher_icons` can generate every size from one file.
+* **App icon**: made from the RIZO SERVICE lockup (`tool/icon/icon.png`, 1024 × 1024, plus an Android adaptive
+  foreground). To change it, replace those files and run `dart run flutter_launcher_icons` in each app.
+  A custom splash screen is not set up (the default white one is used).
 * **Application IDs**: `uz.rizo.rizo_staff` / `uz.rizo.rizo_customer`. Change them once, before the first store upload
   (Android: `android/app/build.gradle.kts`; iOS: Xcode → Runner → Signing).
 * **Signing**: an Android upload keystore and Apple signing certificates.

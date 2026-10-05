@@ -58,6 +58,7 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
   shared_preferences: any
+  flutter_launcher_icons: ^0.14.4
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -95,3 +96,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# App icon (square 1024x1024 made from the RIZO SERVICE lockup; source files are in ../../tool/icon).
+flutter_launcher_icons:
+  android: true
+  ios: true
+  web:
+    generate: true
+    background_color: "#F5F7FA"
+    theme_color: "#7B00E0"
+  image_path: "../../tool/icon/icon.png"
+  remove_alpha_ios: true
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "../../tool/icon/icon_foreground.png"
