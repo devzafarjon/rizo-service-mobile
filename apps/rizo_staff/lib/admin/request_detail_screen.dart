@@ -128,7 +128,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       final two = c.maxWidth >= 900;
       return RefreshIndicator(
         onRefresh: _load,
-        child: ListView(padding: const EdgeInsets.all(12), children: [if (two) Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: column(left)), const SizedBox(width: 12), Expanded(child: column(right))]) else column([...left, ...right])]),
+        child: ListView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, padding: const EdgeInsets.all(12), children: [if (two) Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: column(left)), const SizedBox(width: 12), Expanded(child: column(right))]) else column([...left, ...right])]),
       );
     });
   }

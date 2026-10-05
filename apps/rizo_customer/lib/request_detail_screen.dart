@@ -79,7 +79,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     final trackUrl = '${AppConfig.webUrl}/t/${r.trackingToken}';
     return RefreshIndicator(
       onRefresh: _load,
-      child: ListView(padding: const EdgeInsets.all(14), children: [
+      child: ListView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, padding: const EdgeInsets.all(14), children: [
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
