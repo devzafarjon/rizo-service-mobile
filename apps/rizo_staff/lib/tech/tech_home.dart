@@ -155,10 +155,13 @@ class _Board extends StatelessWidget {
         body: Column(children: [
           const SyncBar(),
           Expanded(
-            child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-              for (final c in techColumns)
-                Expanded(
-                  child: Container(
+            child: LayoutBuilder(builder: (context, constraints) {
+              // Four columns share the screen on a wide tablet; on a narrower one they scroll sideways.
+              final fit = constraints.maxWidth >= 1000;
+              final columns = [
+                for (final c in techColumns)
+                  Container(
+                    width: fit ? null : 310,
                     margin: const EdgeInsets.fromLTRB(8, 8, 0, 8),
                     decoration: BoxDecoration(color: const Color(0xFFE5E7EB).withValues(alpha: 0.6), borderRadius: BorderRadius.circular(16)),
                     child: Column(children: [
@@ -172,9 +175,12 @@ class _Board extends StatelessWidget {
                       Expanded(child: list(c)),
                     ]),
                   ),
-                ),
-              const SizedBox(width: 8),
-            ]),
+              ];
+              if (fit) {
+                return Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [for (final column in columns) Expanded(child: column), const SizedBox(width: 8)]);
+              }
+              return ListView(scrollDirection: Axis.horizontal, children: [...columns, const SizedBox(width: 8)]);
+            }),
           ),
         ]),
       );

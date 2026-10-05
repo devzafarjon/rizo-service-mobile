@@ -229,7 +229,7 @@ class PhoneLink extends StatelessWidget {
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           const Icon(Icons.call_outlined, size: 16, color: Brand.purple),
           const SizedBox(width: 4),
-          Text(formatPhone(phone), style: style ?? const TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)),
+          Flexible(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(formatPhone(phone), style: style ?? const TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)))),
         ]),
       ),
     );
