@@ -85,7 +85,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(r.product.name(locale), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-              Text('${r.product.sku}${r.serialNumber != null ? ' · ${context.tr('serial.label')}: ${r.serialNumber}' : ''}', style: const TextStyle(color: Color(0xFF6B7280))),
+              Text('${r.product.sku}${r.serialNumber != null ? ' · ${context.tr('serial.label')}: ${r.serialNumber}' : ''}', style: TextStyle(color: Brand.muted)),
               const SizedBox(height: 10),
               Wrap(spacing: 6, runSpacing: 6, children: [TypeChip(r.type), StatusChip(r.status, friendly: true), WarrantyChip(r.warrantyStatus), LocationChip(r.locationType)]),
               const SizedBox(height: 12),
@@ -93,7 +93,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             ]),
           ),
         ),
-        if (r.enRouteAt != null && !isTerminalStatus(r.status)) _banner(Icons.local_shipping_outlined, context.tr('portal.technicianOnTheWay', params: {'name': r.technicianName ?? ''}), Brand.orangeTint, const Color(0xFF8A4B00)),
+        if (r.enRouteAt != null && !isTerminalStatus(r.status)) _banner(Icons.local_shipping_outlined, context.tr('portal.technicianOnTheWay', params: {'name': r.technicianName ?? ''}), Brand.orangeTint, Brand.orangeText),
         if (r.status == 'rejected' && r.rejectionReason != null) _banner(Icons.block, context.tr('portal.rejectedBecause', params: {'reason': r.rejectionReason}), Brand.redTint, Brand.red),
         if (r.status == 'awaiting_parts') _banner(Icons.inventory_2_outlined, context.tr('portal.waitingParts'), Brand.amberTint, Brand.amberText),
         if (r.estimate != null) ...[
@@ -114,19 +114,19 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             InfoRow(context.tr('common.completed'), formatDateTime(r.completedAt)),
             InfoRow(context.tr('common.technician'), r.technicianName ?? context.tr('portal.waitingAssignment')),
             if (r.serviceCenter != null)
-              InfoRow(context.tr('centers.center'), null, valueWidget: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(r.serviceCenter!.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)), Text('${r.serviceCenter!.address}${r.serviceCenter!.workingHours != null ? ' · ${r.serviceCenter!.workingHours}' : ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))), if (r.serviceCenter!.phone != null) PhoneLink(r.serviceCenter!.phone!)])),
+              InfoRow(context.tr('centers.center'), null, valueWidget: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(r.serviceCenter!.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)), Text('${r.serviceCenter!.address}${r.serviceCenter!.workingHours != null ? ' · ${r.serviceCenter!.workingHours}' : ''}', style: TextStyle(fontSize: 12, color: Brand.muted)), if (r.serviceCenter!.phone != null) PhoneLink(r.serviceCenter!.phone!)])),
             if (r.saleInvoice != null) InfoRow(context.tr('common.invoice'), '${r.saleInvoice} · ${r.saleWarrantyStatus == 'in_warranty' ? context.tr('portal.inWarrantyUntil') : context.tr('portal.expired')} ${r.saleWarrantyExpiry != null ? formatDate(r.saleWarrantyExpiry!) : ''}'),
             if (r.repairWarrantyUntil != null) InfoRow(context.tr('portal.repairWarranty'), context.tr('portal.repairWarrantyUntil', params: {'date': formatDate(r.repairWarrantyUntil!)})),
             if (r.payment.due > 0) InfoRow(context.tr('portal.toPay'), '${formatMoney(r.payment.due)}${r.payment.paid > 0 ? ' · ${context.tr('payments.paid')}: ${formatMoney(r.payment.paid)}' : ''}${r.payment.balance > 0 && r.payment.paid > 0 ? ' · ${context.tr('payments.balance')}: ${formatMoney(r.payment.balance)}' : ''}'),
           ]),
         ),
         if (r.canConfirmPickup) ...[const SizedBox(height: 12), PickupConfirmCard(customer: true, onConfirm: (sig) => _call(() => _api.post('$_path/pickup', body: {'signature': sig}), success: tr('pickup.saved')))]
-        else if (r.pickupConfirmedAt != null && r.locationType == 'in_shop') Padding(padding: const EdgeInsets.only(top: 12), child: Text(context.tr('pickup.already'), style: const TextStyle(color: Brand.green, fontWeight: FontWeight.w900))),
+        else if (r.pickupConfirmedAt != null && r.locationType == 'in_shop') Padding(padding: const EdgeInsets.only(top: 12), child: Text(context.tr('pickup.already'), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w900))),
         const SizedBox(height: 12),
         Section(
           title: context.tr('portal.messages'),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            if (r.messages.isEmpty) Text(context.tr('portal.noMessages'), style: const TextStyle(color: Color(0xFF6B7280))),
+            if (r.messages.isEmpty) Text(context.tr('portal.noMessages'), style: TextStyle(color: Brand.muted)),
             for (final m in r.messages)
               Align(
                 alignment: m.fromCustomer ? Alignment.centerRight : Alignment.centerLeft,
@@ -134,8 +134,8 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
                   constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.78),
                   margin: const EdgeInsets.only(bottom: 8),
                   padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: m.fromCustomer ? Brand.purpleTint : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(14)),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(m.text), const SizedBox(height: 4), Text('${m.fromCustomer ? context.tr('portal.you') : context.tr('portal.service')} · ${formatStamp(m.createdAt)}', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)))]),
+                  decoration: BoxDecoration(color: m.fromCustomer ? Brand.purpleTint : Brand.surfaceAlt, borderRadius: BorderRadius.circular(14)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(m.text), const SizedBox(height: 4), Text('${m.fromCustomer ? context.tr('portal.you') : context.tr('portal.service')} · ${formatStamp(m.createdAt)}', style: TextStyle(fontSize: 11, color: Brand.muted))]),
                 ),
               ),
             if (r.status != 'cancelled') ...[

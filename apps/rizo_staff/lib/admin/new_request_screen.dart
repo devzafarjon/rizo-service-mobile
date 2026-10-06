@@ -180,7 +180,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
               Labeled(context.tr('newRequest.issue'), hint: context.tr('newRequest.issueHint'), child: TextField(controller: _issue, maxLines: 4, minLines: 3)),
               if (type == 'repair') Labeled(context.tr('newRequest.defect'), child: SegmentedChoice<String>(value: defectType, options: {'dead_on_arrival': context.tr('defect.dead_on_arrival'), 'failed_during_use': context.tr('defect.failed_during_use')}, onChanged: (v) => setState(() => defectType = v))),
               if (type == 'repair') Labeled(context.tr('newRequest.location'), child: SegmentedChoice<String>(value: locationType, options: {'in_shop': context.tr('location.in_shop'), 'on_site': context.tr('location.on_site')}, onChanged: (v) => setState(() => locationType = v))),
-              if (type == 'installation') Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(context.tr('newRequest.installationOnlyOnSite'), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w700, fontSize: 13))),
+              if (type == 'installation') Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(context.tr('newRequest.installationOnlyOnSite'), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w700, fontSize: 13))),
               if (_onSite)
                 Labeled(
                   context.tr('newRequest.address'),
@@ -225,7 +225,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
               if (type == 'repair') ...[
                 const SizedBox(height: 4),
                 Text(context.tr('intake.title'), style: const TextStyle(fontWeight: FontWeight.w900)),
-                Text(context.tr('intake.hint'), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                Text(context.tr('intake.hint'), style: TextStyle(fontSize: 12, color: Brand.muted)),
                 const SizedBox(height: 8),
                 Wrap(spacing: 8, runSpacing: 4, children: [for (final item in _intakeItems) FilterChip(label: Text(context.tr('intake.items.$item')), selected: checklist.contains(item), onSelected: (v) => setState(() => v ? checklist.add(item) : checklist.remove(item)))]),
                 const SizedBox(height: 10),

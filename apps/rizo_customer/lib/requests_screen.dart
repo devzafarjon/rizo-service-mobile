@@ -66,18 +66,18 @@ class RequestsScreenState extends State<RequestsScreen> {
               : RefreshIndicator(
                   onRefresh: _load,
                   child: ListView(padding: const EdgeInsets.fromLTRB(14, 8, 14, 100), children: [
-                    Text(context.tr('portal.hello', params: {'name': user.name.split(' ').first}), style: const TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)),
+                    Text(context.tr('portal.hello', params: {'name': user.name.split(' ').first}), style: TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
-                    Text(context.tr('portal.homeIntro'), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+                    Text(context.tr('portal.homeIntro'), style: TextStyle(color: Brand.muted, fontSize: 13)),
                     for (final r in pendingEstimates)
                       Padding(
                         padding: const EdgeInsets.only(top: 12),
                         child: InkWell(
                           onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(requestId: r.id))).then((_) => _load(silent: true)),
-                          child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.purpleTint, borderRadius: BorderRadius.circular(14)), child: Row(children: [const Icon(Icons.request_quote_outlined, color: Brand.purple), const SizedBox(width: 10), Expanded(child: Text(context.tr('portal.estimatePending', params: {'id': formatRequestId(r.displayId)}), style: const TextStyle(color: Brand.purple, fontWeight: FontWeight.w800))), const Icon(Icons.chevron_right, color: Brand.purple)])),
+                          child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.purpleTint, borderRadius: BorderRadius.circular(14)), child: Row(children: [Icon(Icons.request_quote_outlined, color: Brand.purple), const SizedBox(width: 10), Expanded(child: Text(context.tr('portal.estimatePending', params: {'id': formatRequestId(r.displayId)}), style: TextStyle(color: Brand.purple, fontWeight: FontWeight.w800))), Icon(Icons.chevron_right, color: Brand.purple)])),
                         ),
                       ),
-                    if (pendingFeedback > 0) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('portal.pendingFeedback', count: pendingFeedback), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800)))),
+                    if (pendingFeedback > 0) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('portal.pendingFeedback', count: pendingFeedback), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800)))),
                     const SizedBox(height: 12),
                     SegmentedChoice<String>(value: scope, options: {'all': context.tr('common.all'), 'open': context.tr('mobile.filter.open'), 'done': context.tr('mobile.filter.done')}, onChanged: (v) => setState(() => scope = v)),
                     const SizedBox(height: 12),
@@ -94,12 +94,12 @@ class RequestsScreenState extends State<RequestsScreen> {
                               child: Padding(
                                 padding: const EdgeInsets.all(14),
                                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Row(children: [Text(formatRequestId(r.displayId), style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w800, fontSize: 12)), const Spacer(), Text(formatDateTime(r.createdAt), style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12))]),
+                                  Row(children: [Text(formatRequestId(r.displayId), style: TextStyle(color: Brand.faint, fontWeight: FontWeight.w800, fontSize: 12)), const Spacer(), Text(formatDateTime(r.createdAt), style: TextStyle(color: Brand.faint, fontSize: 12))]),
                                   Text(r.product.name(locale), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
                                   const SizedBox(height: 8),
                                   Wrap(spacing: 6, runSpacing: 6, children: [TypeChip(r.type), StatusChip(r.status, friendly: true), WarrantyChip(r.warrantyStatus)]),
-                                  if (r.technicianName != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('portal.technicianLine', params: {'name': r.technicianName}), style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)))),
-                                  if (r.estimate?.canRespond == true) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('estimate.status.sent'), style: const TextStyle(fontWeight: FontWeight.w800, color: Brand.purple))),
+                                  if (r.technicianName != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('portal.technicianLine', params: {'name': r.technicianName}), style: TextStyle(fontSize: 13, color: Brand.muted))),
+                                  if (r.estimate?.canRespond == true) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('estimate.status.sent'), style: TextStyle(fontWeight: FontWeight.w800, color: Brand.purple))),
                                 ]),
                               ),
                             ),

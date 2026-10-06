@@ -121,7 +121,7 @@ class _Kpi extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280)), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted), maxLines: 2, overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
           FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: bad ? Brand.red : Brand.ink))),
           if (delta != null) Text('${delta! > 0 ? '▲' : (delta! < 0 ? '▼' : '•')} ${delta!.abs()}% ${context.tr('dashboard.vsPrevious')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: delta! >= 0 ? Brand.green : Brand.red)),
@@ -137,7 +137,7 @@ class _Bar extends StatelessWidget {
   final double max;
   final Color color;
   @override
-  Widget build(BuildContext context) => ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: max == 0 ? 0 : value / max, minHeight: 10, color: color, backgroundColor: const Color(0xFFF3F4F6)));
+  Widget build(BuildContext context) => ClipRRect(borderRadius: BorderRadius.circular(6), child: LinearProgressIndicator(value: max == 0 ? 0 : value / max, minHeight: 10, color: color, backgroundColor: Brand.surfaceAlt));
 }
 
 class _Mini extends StatelessWidget {
@@ -148,7 +148,7 @@ class _Mini extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(14)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280), fontWeight: FontWeight.w700)), Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color))]),
+        decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(14)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: TextStyle(fontSize: 12, color: Brand.muted, fontWeight: FontWeight.w700)), Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: color))]),
       );
 }

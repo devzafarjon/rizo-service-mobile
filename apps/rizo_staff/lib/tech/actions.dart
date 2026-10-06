@@ -66,7 +66,7 @@ class _PauseDialogState extends State<PauseDialog> {
       title: Text(context.tr('tech.pauseTitle')),
       content: SingleChildScrollView(
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(context.tr('tech.pauseHint', params: {'name': widget.name}), style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+          Text(context.tr('tech.pauseHint', params: {'name': widget.name}), style: TextStyle(fontSize: 13, color: Brand.muted)),
           const SizedBox(height: 14),
           TextField(controller: _reason, maxLines: 2, minLines: 1, autofocus: true, onChanged: (_) => setState(() {}), decoration: InputDecoration(labelText: context.tr('tech.pauseReason'), hintText: context.tr('tech.pauseReasonPlaceholder'))),
           const SizedBox(height: 14),

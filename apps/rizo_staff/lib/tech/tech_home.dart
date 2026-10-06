@@ -115,7 +115,7 @@ class _Board extends StatelessWidget {
       return RefreshIndicator(
         onRefresh: () => repo.refresh(),
         child: jobs.isEmpty
-            ? ListView(children: [Padding(padding: const EdgeInsets.all(40), child: Center(child: Text(context.tr('tech.noJobs'), style: const TextStyle(color: Color(0xFF9CA3AF)))))])
+            ? ListView(children: [Padding(padding: const EdgeInsets.all(40), child: Center(child: Text(context.tr('tech.noJobs'), style: TextStyle(color: Brand.faint))))])
             : ListView.separated(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
                 itemCount: jobs.length,
@@ -163,13 +163,13 @@ class _Board extends StatelessWidget {
                   Container(
                     width: fit ? null : 310,
                     margin: const EdgeInsets.fromLTRB(8, 8, 0, 8),
-                    decoration: BoxDecoration(color: const Color(0xFFE5E7EB).withValues(alpha: 0.6), borderRadius: BorderRadius.circular(16)),
+                    decoration: BoxDecoration(color: Brand.border.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(16)),
                     child: Column(children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
                         child: Row(children: [
                           Expanded(child: Text(context.tr('techColumn.$c'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))),
-                          Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(99)), child: Text('${byColumn[c]!.length}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3), decoration: BoxDecoration(color: Brand.surface, borderRadius: BorderRadius.circular(99)), child: Text('${byColumn[c]!.length}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
                         ]),
                       ),
                       Expanded(child: list(c)),

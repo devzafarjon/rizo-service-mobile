@@ -53,7 +53,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
           if (loading && data == null) const LoadingView(),
           if (error != null && data == null) ErrorView(error: error!, onRetry: _load),
           if (data != null) ...[
-            Text(context.tr('payroll.myIntro', params: {'percent': tech['payPercent'], 'fixed': formatMoney(asDouble(tech['payFixedPerJob']))}), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+            Text(context.tr('payroll.myIntro', params: {'percent': tech['payPercent'], 'fixed': formatMoney(asDouble(tech['payFixedPerJob']))}), style: TextStyle(color: Brand.muted, fontSize: 13)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(18),
@@ -67,7 +67,7 @@ class _EarningsScreenState extends State<EarningsScreen> {
             Section(
               title: context.tr('payroll.jobs'),
               child: jobs.isEmpty
-                  ? Text(context.tr('payroll.noJobs'), style: const TextStyle(color: Color(0xFF6B7280)))
+                  ? Text(context.tr('payroll.noJobs'), style: TextStyle(color: Brand.muted))
                   : Column(children: [
                       for (final job in jobs)
                         ListTile(

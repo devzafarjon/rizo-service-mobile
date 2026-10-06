@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/material.dart' show Brightness, Colors, ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -47,6 +48,7 @@ Map<String, dynamic> _job({String status = 'new', String type = 'repair', String
 Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 80));
 
 void main() {
+  _themeTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Translator', () {
@@ -284,6 +286,37 @@ void main() {
 
     test('uzbek dates', () {
       expect(formatDate('2026-10-05'), '05-okt 2026');
+    });
+  });
+}
+
+void _themeTests() {
+  group('theme mode', () {
+    tearDown(() => Brand.dark = false);
+
+    test('remembers the choice and switches the brand palette', () async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      SharedPreferences.setMockInitialValues({'rizo_theme': 'dark'});
+      await ThemeController.I.load();
+      expect(ThemeController.I.mode, ThemeMode.dark);
+      expect(Brand.dark, isTrue);
+      final dark = Brand.surface;
+
+      await ThemeController.I.setMode(ThemeMode.light);
+      expect(Brand.dark, isFalse);
+      expect(Brand.surface, isNot(dark));
+      expect((await SharedPreferences.getInstance()).getString('rizo_theme'), 'light');
+
+      await ThemeController.I.setMode(ThemeMode.system);
+      expect((await SharedPreferences.getInstance()).getString('rizo_theme'), isNull);
+    });
+
+    test('dark theme data uses dark surfaces and keeps white text on purple buttons', () {
+      final dark = buildTheme(dark: true);
+      expect(dark.brightness, Brightness.dark);
+      expect(dark.cardTheme.color, isNot(Colors.white));
+      expect(dark.scaffoldBackgroundColor.computeLuminance(), lessThan(0.05));
+      expect(buildTheme().brightness, Brightness.light);
     });
   });
 }

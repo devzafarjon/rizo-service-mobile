@@ -64,7 +64,7 @@ class _RegisterProductScreenState extends State<RegisterProductScreen> {
       body: loading
           ? const LoadingView()
           : ListView(padding: const EdgeInsets.all(16), children: [
-              Text(context.tr('register.intro'), style: const TextStyle(color: Color(0xFF6B7280))),
+              Text(context.tr('register.intro'), style: TextStyle(color: Brand.muted)),
               const SizedBox(height: 16),
               Labeled(context.tr('common.product'), child: DropdownButtonFormField<String?>(initialValue: productId, isExpanded: true, hint: Text(context.tr('register.selectProduct')), items: [for (final p in products) DropdownMenuItem<String?>(value: p.id, child: Text('${p.name(locale)} · ${p.sku}', overflow: TextOverflow.ellipsis))], onChanged: (v) => setState(() => productId = v))),
               Labeled(context.tr('serial.label'), hint: context.tr('register.serialHint'), child: TextField(controller: _serial)),
@@ -81,7 +81,7 @@ class _RegisterProductScreenState extends State<RegisterProductScreen> {
                 ),
               ),
               Labeled('${context.tr('register.invoice')} (${context.tr('common.optional')})', hint: context.tr('register.invoiceHint'), child: TextField(controller: _invoice)),
-              Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 14), decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12)), child: Text(context.tr('register.verifyNote'), style: const TextStyle(fontSize: 12, color: Color(0xFF4B5563)))),
+              Container(padding: const EdgeInsets.all(12), margin: const EdgeInsets.only(bottom: 14), decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(12)), child: Text(context.tr('register.verifyNote'), style: TextStyle(fontSize: 12, color: Brand.subtle))),
               BusyButton(label: context.tr('register.submit'), onPressed: _submit),
             ]),
     );

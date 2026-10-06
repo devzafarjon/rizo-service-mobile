@@ -12,21 +12,23 @@ import '../models.dart';
 import '../offline/storage.dart';
 import '../status.dart';
 import '../theme.dart';
+import 'forms.dart';
 
 // ---- chips -------------------------------------------------------------------------------------------------------
 
 class Pill extends StatelessWidget {
-  const Pill(this.label, {super.key, this.color = Brand.ink, this.background = const Color(0xFFF3F4F6), this.icon});
+  const Pill(this.label, {super.key, this.color, this.background, this.icon});
   final String label;
-  final Color color;
-  final Color background;
+  final Color? color;
+  final Color? background;
   final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    final color = this.color ?? Brand.ink;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(999)),
+      decoration: BoxDecoration(color: background ?? Brand.surfaceAlt, borderRadius: BorderRadius.circular(999)),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         if (icon != null) ...[Icon(icon, size: 13, color: color), const SizedBox(width: 4)],
         Flexible(child: Text(label, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w800), overflow: TextOverflow.ellipsis)),
@@ -38,26 +40,26 @@ class Pill extends StatelessWidget {
 ({Color fg, Color bg}) statusColors(String status) {
   switch (status) {
     case 'new':
-      return (fg: const Color(0xFF1D4ED8), bg: const Color(0xFFEFF6FF));
+      return (fg: Brand.blue, bg: Brand.blueTint);
     case 'diagnosing':
     case 'in_progress':
       return (fg: Brand.purple, bg: Brand.purpleTint);
     case 'awaiting_decision':
     case 'awaiting_parts':
     case 'paused':
-      return (fg: Brand.amberText, bg: const Color(0xFFFEF3C7));
+      return (fg: Brand.amberText, bg: Brand.amberTint);
     case 'ready':
     case 'completed':
     case 'picked_up':
     case 'replaced':
       return (fg: Brand.green, bg: Brand.greenTint);
     case 'refunded':
-      return (fg: const Color(0xFF0F766E), bg: const Color(0xFFF0FDFA));
+      return (fg: Brand.teal, bg: Brand.tealTint);
     case 'rejected':
     case 'cancelled':
       return (fg: Brand.red, bg: Brand.redTint);
     default:
-      return (fg: Brand.ink, bg: const Color(0xFFF3F4F6));
+      return (fg: Brand.ink, bg: Brand.surfaceAlt);
   }
 }
 
@@ -101,7 +103,7 @@ class WarrantyChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final ok = status == 'in_warranty';
     final none = status == 'not_applicable';
-    return Pill(context.tr('warranty.$status'), color: ok ? Brand.green : (none ? const Color(0xFF4B5563) : Brand.red), background: ok ? Brand.greenTint : (none ? const Color(0xFFF3F4F6) : Brand.redTint));
+    return Pill(context.tr('warranty.$status'), color: ok ? Brand.green : (none ? Brand.subtle : Brand.red), background: ok ? Brand.greenTint : (none ? Brand.surfaceAlt : Brand.redTint));
   }
 }
 
@@ -123,10 +125,10 @@ class Section extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           if (title != null)
             Row(children: [
-              Expanded(child: Text(title!.toUpperCase(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF6B7280), letterSpacing: 0.4))),
+              Expanded(child: Text(title!.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Brand.muted, letterSpacing: 0.4))),
               ?trailing,
             ]),
-          if (hint != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(hint!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))),
+          if (hint != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(hint!, style: TextStyle(fontSize: 12, color: Brand.muted))),
           if (title != null || hint != null) const SizedBox(height: 12),
           child,
         ]),
@@ -152,10 +154,10 @@ class EmptyView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 44, color: const Color(0xFF9CA3AF)),
+          Icon(icon, size: 44, color: Brand.faint),
           const SizedBox(height: 12),
           Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-          if (body != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(body!, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6B7280)))),
+          if (body != null) Padding(padding: const EdgeInsets.only(top: 6), child: Text(body!, textAlign: TextAlign.center, style: TextStyle(color: Brand.muted))),
         ]),
       ),
     );
@@ -172,7 +174,7 @@ class ErrorView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.cloud_off_outlined, size: 44, color: Color(0xFF9CA3AF)),
+          Icon(Icons.cloud_off_outlined, size: 44, color: Brand.faint),
           const SizedBox(height: 12),
           Text(context.errorText(error), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700)),
           if (onRetry != null) ...[
@@ -202,7 +204,7 @@ class InfoRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        SizedBox(width: 118, child: Text(label, style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13))),
+        SizedBox(width: 118, child: Text(label, style: TextStyle(color: Brand.muted, fontSize: 13))),
         Expanded(child: valueWidget ?? Text(value ?? '—', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
       ]),
     );
@@ -227,9 +229,9 @@ class PhoneLink extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.call_outlined, size: 16, color: Brand.purple),
+          Icon(Icons.call_outlined, size: 16, color: Brand.purple),
           const SizedBox(width: 4),
-          Flexible(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(formatPhone(phone), style: style ?? const TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)))),
+          Flexible(child: FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(formatPhone(phone), style: style ?? TextStyle(color: Brand.purple, fontWeight: FontWeight.w800)))),
         ]),
       ),
     );
@@ -303,7 +305,7 @@ class JobImage extends StatelessWidget {
           return SizedBox(
             height: height,
             width: double.infinity,
-            child: bytes == null ? const ColoredBox(color: Color(0xFFF3F4F6), child: Icon(Icons.image_outlined)) : Image.memory(bytes, fit: fit),
+            child: bytes == null ? ColoredBox(color: Brand.surfaceAlt, child: Icon(Icons.image_outlined)) : Image.memory(bytes, fit: fit),
           );
         },
       );
@@ -314,8 +316,8 @@ class JobImage extends StatelessWidget {
       child: Image.network(
         AppConfig.url(url),
         fit: fit,
-        errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFFF3F4F6), child: Icon(Icons.broken_image_outlined)),
-        loadingBuilder: (context, child, progress) => progress == null ? child : const ColoredBox(color: Color(0xFFF3F4F6), child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
+        errorBuilder: (_, _, _) => ColoredBox(color: Brand.surfaceAlt, child: Icon(Icons.broken_image_outlined)),
+        loadingBuilder: (context, child, progress) => progress == null ? child : ColoredBox(color: Brand.surfaceAlt, child: Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))),
       ),
     );
   }
@@ -325,7 +327,20 @@ class LogoMark extends StatelessWidget {
   const LogoMark({super.key, this.height = 40});
   final double height;
   @override
-  Widget build(BuildContext context) => Image.asset('assets/rizo-logo.png', package: 'rizo_core', height: height, errorBuilder: (_, _, _) => Text('RIZO', style: TextStyle(fontSize: height * 0.7, fontWeight: FontWeight.w900, color: Brand.purple)));
+  Widget build(BuildContext context) {
+    final logo = Image.asset('assets/rizo-logo.png', package: 'rizo_core', height: height, errorBuilder: (_, _, _) => Text('RIZO', style: TextStyle(fontSize: height * 0.7, fontWeight: FontWeight.w900, color: Brand.purple)));
+    if (!Brand.dark) return logo;
+    // The purple wordmark is too dim on the dark background, so lift it (same idea as the website).
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix(<double>[
+        1.55, 0, 0, 0, 0, //
+        0, 1.55, 0, 0, 0,
+        0, 0, 1.55, 0, 0,
+        0, 0, 0, 1, 0,
+      ]),
+      child: logo,
+    );
+  }
 }
 
 // ---- language & server -------------------------------------------------------------------------------------------
@@ -346,9 +361,9 @@ class LanguageButton extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.language, size: 20, color: Brand.purple),
+          Icon(Icons.language, size: 20, color: Brand.purple),
           const SizedBox(width: 4),
-          Text(translator.locale.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w800, color: Brand.ink)),
+          Text(translator.locale.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w800, color: Brand.ink)),
         ]),
       ),
     );
@@ -362,7 +377,7 @@ Future<void> showServerDialog(BuildContext context) async {
     builder: (ctx) => AlertDialog(
       title: Text(ctx.tr('mobile.serverTitle')),
       content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(ctx.tr('mobile.serverHint'), style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280))),
+        Text(ctx.tr('mobile.serverHint'), style: TextStyle(fontSize: 13, color: Brand.muted)),
         const SizedBox(height: 12),
         TextField(controller: controller, keyboardType: TextInputType.url, autocorrect: false, decoration: const InputDecoration(hintText: 'https://…')),
       ]),
@@ -387,5 +402,30 @@ class ServerLink extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!AppConfig.canChangeServer) return const SizedBox.shrink();
     return TextButton.icon(onPressed: () => showServerDialog(context), icon: const Icon(Icons.dns_outlined, size: 16), label: Text(context.tr('mobile.serverTitle')));
+  }
+}
+
+// ---- appearance --------------------------------------------------------------------------------------------------
+
+/// Light / dark / follow the device, shown in both apps' settings.
+class ThemeModeSetting extends StatelessWidget {
+  const ThemeModeSetting({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<ThemeController>();
+    context.watch<Translator>();
+    return Section(
+      title: context.tr('theme.label'),
+      child: SegmentedChoice<ThemeMode>(
+        value: controller.mode,
+        options: {
+          ThemeMode.light: context.tr('theme.light'),
+          ThemeMode.dark: context.tr('theme.dark'),
+          ThemeMode.system: context.tr('theme.system'),
+        },
+        onChanged: controller.setMode,
+      ),
+    );
   }
 }

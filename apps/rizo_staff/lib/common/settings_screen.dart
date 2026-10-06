@@ -18,12 +18,12 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(padding: const EdgeInsets.all(16), children: [
         Section(
           child: Row(children: [
-            CircleAvatar(radius: 26, backgroundColor: Brand.purpleTint, child: Text(user.name.isEmpty ? '?' : user.name.characters.first.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, color: Brand.purple, fontSize: 20))),
+            CircleAvatar(radius: 26, backgroundColor: Brand.purpleTint, child: Text(user.name.isEmpty ? '?' : user.name.characters.first.toUpperCase(), style: TextStyle(fontWeight: FontWeight.w900, color: Brand.purple, fontSize: 20))),
             const SizedBox(width: 14),
             Expanded(
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(user.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-                Text(formatPhone(user.phone), style: const TextStyle(color: Color(0xFF6B7280))),
+                Text(formatPhone(user.phone), style: TextStyle(color: Brand.muted)),
                 const SizedBox(height: 4),
                 Pill(_roleLabel(context, user), color: Brand.purple, background: Brand.purpleTint),
               ]),
@@ -55,6 +55,8 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (code) => session.saveLocale(code),
           ),
         ),
+        const SizedBox(height: 12),
+        const ThemeModeSetting(),
         if (AppConfig.canChangeServer) ...[
           const SizedBox(height: 12),
           Card(child: ListTile(leading: const Icon(Icons.dns_outlined), title: Text(context.tr('mobile.serverTitle')), subtitle: Text(AppConfig.baseUrl), onTap: () => showServerDialog(context))),

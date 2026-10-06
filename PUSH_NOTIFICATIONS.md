@@ -32,6 +32,7 @@ change will be, so it can be built in one go once the credentials exist.
 * Tapping a notification opens the request (`serviceRequestId` is sent in the payload).
 * Android 13+ notification permission; iOS "Push Notifications" and "Background Modes → Remote notifications" capabilities.
 
-## Decisions to confirm before building
-* Should staff get push for everything the bell shows, or only for assignments and customer replies?
-* Quiet hours for customers (no push at night)?
+## Decisions
+* **Staff receive push for ALL notifications** the bell shows (assignments, customer replies, overdue, part arrivals, …),
+  not only a subset. Decided by the owner.
+* Quiet hours were not requested (the "tungi rejim" request means dark mode, which is built into the apps separately).

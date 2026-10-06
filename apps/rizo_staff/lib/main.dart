@@ -9,6 +9,7 @@ Future<void> main() async {
   await _lockTabletToLandscape();
   await AppConfig.load();
   await Translator.I.load();
+  await ThemeController.I.load();
   final session = StaffSession();
   await session.restore();
   runApp(StaffApp(session: session));

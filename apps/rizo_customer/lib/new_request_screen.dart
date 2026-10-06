@@ -102,7 +102,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
               LinearProgressIndicator(value: (step + 1) / 3, minHeight: 4, color: Brand.purple, backgroundColor: Brand.purpleTint),
               Expanded(
                 child: ListView(padding: const EdgeInsets.all(16), children: [
-                  Text(context.tr('common.stepOf', params: {'current': step + 1, 'total': 3}).toUpperCase(), style: const TextStyle(color: Brand.purple, fontWeight: FontWeight.w900, fontSize: 12)),
+                  Text(context.tr('common.stepOf', params: {'current': step + 1, 'total': 3}).toUpperCase(), style: TextStyle(color: Brand.purple, fontWeight: FontWeight.w900, fontSize: 12)),
                   const SizedBox(height: 4),
                   Text(context.tr('portal.step${step + 1}Title'), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 16),
@@ -136,7 +136,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: Material(
-            color: type == t ? Brand.purpleTint : Colors.white,
+            color: type == t ? Brand.purpleTint : Brand.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: type == t ? Brand.purple : Brand.border, width: type == t ? 2 : 1)),
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
@@ -144,7 +144,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                 type = t;
                 if (t == 'installation') locationType = 'on_site';
               }),
-              child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [Icon(t == 'repair' ? Icons.build_outlined : Icons.handyman_outlined, color: Brand.purple), const SizedBox(width: 14), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(context.tr('type.$t'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)), Text(context.tr('portal.hint.$t'), style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)))]))])),
+              child: Padding(padding: const EdgeInsets.all(16), child: Row(children: [Icon(t == 'repair' ? Icons.build_outlined : Icons.handyman_outlined, color: Brand.purple), const SizedBox(width: 14), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(context.tr('type.$t'), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)), Text(context.tr('portal.hint.$t'), style: TextStyle(fontSize: 13, color: Brand.muted))]))])),
             ),
           ),
         ),
@@ -164,7 +164,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
             }),
           ),
         ),
-      if (sales.isEmpty) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('portal.noPurchases'), style: const TextStyle(color: Color(0xFF6B7280)))),
+      if (sales.isEmpty) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('portal.noPurchases'), style: TextStyle(color: Brand.muted))),
       if (otherProduct)
         Labeled(
           context.tr('common.product'),
@@ -218,7 +218,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
               ),
             ),
           PhotoPickerBar(onPicked: (list) async => setState(() => photos.addAll(list.take(8 - photos.length)))),
-          if (photos.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text(context.tr('portal.photoCount', count: photos.length), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))),
+          if (photos.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 6), child: Text(context.tr('portal.photoCount', count: photos.length), style: TextStyle(fontSize: 12, color: Brand.muted))),
         ]),
       ),
     ];
@@ -227,7 +227,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   List<Widget> _stepThree(String locale) {
     return [
       if (type == 'repair') Labeled(context.tr('portal.where'), child: SegmentedChoice<String>(value: locationType, options: {'in_shop': context.tr('location.in_shop'), 'on_site': context.tr('location.on_site')}, onChanged: (v) => setState(() => locationType = v))),
-      if (type == 'installation') Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(context.tr('portal.installationOnlyOnSite'), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w700))),
+      if (type == 'installation') Padding(padding: const EdgeInsets.only(bottom: 14), child: Text(context.tr('portal.installationOnlyOnSite'), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w700))),
       if (_onSite) Labeled(context.tr('common.address'), child: TextField(controller: _address, maxLines: 2, minLines: 1, onChanged: (_) => setState(() {}))),
       if (!_onSite && centers.isNotEmpty)
         Labeled(context.tr('centers.center'), hint: context.tr('centers.pickHint'), child: DropdownButtonFormField<String?>(initialValue: centerId, isExpanded: true, items: [DropdownMenuItem<String?>(value: null, child: Text(context.tr('centers.auto'))), for (final c in centers) DropdownMenuItem<String?>(value: c.id, child: Text('${c.name} · ${c.address}', overflow: TextOverflow.ellipsis))], onChanged: (v) => setState(() => centerId = v))),

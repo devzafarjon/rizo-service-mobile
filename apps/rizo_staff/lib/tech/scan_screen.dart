@@ -69,7 +69,7 @@ class _ScanScreenState extends State<ScanScreen> {
                     return const SizedBox.shrink();
                   },
                 )
-              : Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(context.tr('mobile.cameraUnavailable'), textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6B7280))))),
+              : Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(context.tr('mobile.cameraUnavailable'), textAlign: TextAlign.center, style: TextStyle(color: Brand.muted)))),
         ),
         SafeArea(
           child: Padding(

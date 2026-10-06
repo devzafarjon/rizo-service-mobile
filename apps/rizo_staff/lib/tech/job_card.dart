@@ -30,11 +30,11 @@ class JobCard extends StatelessWidget {
               Expanded(child: Text(job.customer.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900), maxLines: 2, overflow: TextOverflow.ellipsis)),
               const SizedBox(width: 8),
               Icon(job.isOnSite ? Icons.place : Icons.storefront, size: 20, color: job.isOnSite ? Brand.orange : Brand.purple),
-              if (pending) const Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.cloud_upload_outlined, size: 18, color: Brand.orangeText)),
+              if (pending) Padding(padding: EdgeInsets.only(left: 6), child: Icon(Icons.cloud_upload_outlined, size: 18, color: Brand.orangeText)),
             ]),
             const SizedBox(height: 2),
-            Text(job.product.name(locale), style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
-            Text(formatRequestId(job.displayId), style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(job.product.name(locale), style: TextStyle(color: Brand.muted, fontSize: 13)),
+            Text(formatRequestId(job.displayId), style: TextStyle(color: Brand.faint, fontSize: 12, fontWeight: FontWeight.w700)),
             PhoneLink(job.customer.phone),
             const SizedBox(height: 4),
             Wrap(spacing: 6, runSpacing: 6, children: [
@@ -44,10 +44,10 @@ class JobCard extends StatelessWidget {
               if (job.warrantyStatus == 'in_warranty') WarrantyChip(job.warrantyStatus),
             ]),
             if (job.scheduledAt != null)
-              Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.scheduledFor', params: {'time': formatStamp(job.scheduledAt)}), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))),
+              Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.scheduledFor', params: {'time': formatStamp(job.scheduledAt)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))),
             if (job.timer != null) Padding(padding: const EdgeInsets.only(top: 10), child: CountdownChip(job.timer!)),
             if (job.activePause != null)
-              Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF4B5563)))),
+              Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Brand.subtle))),
             if (job.isOnSite && location != null)
               Padding(padding: const EdgeInsets.only(top: 10), child: _Wide(label: context.tr('maps.directions'), icon: Icons.navigation_outlined, tone: _Tone.orange, onTap: () => openUri(context, location.mapsUri))),
             if (job.isOnSite && _column != 'completed') ..._siteButtons(context),
@@ -62,13 +62,13 @@ class JobCard extends StatelessWidget {
     final widgets = <Widget>[];
     if (job.arrivedAt == null) {
       if (job.enRouteAt != null) {
-        widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.enRouteSince', params: {'time': formatStamp(job.enRouteAt)}), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))));
+        widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.enRouteSince', params: {'time': formatStamp(job.enRouteAt)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))));
       } else {
         widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: _Wide(label: context.tr('tech.enRoute'), icon: Icons.local_shipping_outlined, tone: _Tone.orange, onTap: () => actions.enRoute(job))));
       }
       widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: _Wide(label: context.tr('tech.arrived'), icon: Icons.done_all, tone: _Tone.neutral, onTap: () => actions.arrived(job))));
     } else {
-      widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [const Icon(Icons.done_all, size: 16, color: Brand.green), const SizedBox(width: 6), Text(context.tr('tech.arrivedAt', params: {'time': formatStamp(job.arrivedAt)}), style: const TextStyle(color: Brand.green, fontWeight: FontWeight.w800, fontSize: 12))])));
+      widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Row(children: [Icon(Icons.done_all, size: 16, color: Brand.green), const SizedBox(width: 6), Text(context.tr('tech.arrivedAt', params: {'time': formatStamp(job.arrivedAt)}), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w800, fontSize: 12))])));
     }
     return widgets;
   }
@@ -88,7 +88,7 @@ class _Wide extends StatelessWidget {
     final (bg, fg) = switch (tone) {
       _Tone.primary => (Brand.purple, Colors.white),
       _Tone.orange => (Brand.orangeTint, Brand.orangeText),
-      _Tone.neutral => (const Color(0xFFF3F4F6), Brand.ink),
+      _Tone.neutral => (Brand.surfaceAlt, Brand.ink),
     };
     return SizedBox(
       width: double.infinity,
@@ -145,7 +145,7 @@ class _Actions extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(color: Brand.amberTint, borderRadius: BorderRadius.circular(12)),
-        child: Text(context.tr('tech.waitingDecision'), textAlign: TextAlign.center, style: const TextStyle(color: Brand.amberText, fontWeight: FontWeight.w800, fontSize: 13)),
+        child: Text(context.tr('tech.waitingDecision'), textAlign: TextAlign.center, style: TextStyle(color: Brand.amberText, fontWeight: FontWeight.w800, fontSize: 13)),
       )));
     }
     if (job.status == 'awaiting_parts') {

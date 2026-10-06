@@ -22,7 +22,7 @@ class _FeedbackFormState extends State<FeedbackForm> {
   Widget build(BuildContext context) {
     final r = widget.request;
     if (r.feedbackRating != null) {
-      return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('feedback.rated', params: {'rating': r.feedbackRating}), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w900)));
+      return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('feedback.rated', params: {'rating': r.feedbackRating}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w900)));
     }
     if (!r.canFeedback) return const SizedBox.shrink();
     return Section(
@@ -36,7 +36,7 @@ class _FeedbackFormState extends State<FeedbackForm> {
                 rating = v;
                 tags.clear();
               }),
-              icon: Icon(v <= rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 34, color: v <= rating ? Brand.orange : const Color(0xFFD1D5DB)),
+              icon: Icon(v <= rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 34, color: v <= rating ? Brand.orange : Brand.line),
             ),
         ]),
         if (rating > 0) ...[

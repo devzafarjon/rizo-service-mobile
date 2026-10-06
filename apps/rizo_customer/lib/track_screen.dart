@@ -33,7 +33,7 @@ class _TrackScreenState extends State<TrackScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('track.title')), actions: const [LanguageButton()]),
       body: ListView(padding: const EdgeInsets.all(20), children: [
-        Text(context.tr('track.hint'), style: const TextStyle(color: Color(0xFF6B7280))),
+        Text(context.tr('track.hint'), style: TextStyle(color: Brand.muted)),
         const SizedBox(height: 18),
         Labeled(context.tr('common.requestId'), child: TextField(controller: _id, decoration: const InputDecoration(hintText: '#051026010001'))),
         Labeled(context.tr('common.phone'), child: TextField(controller: _phone, keyboardType: TextInputType.phone)),
@@ -121,8 +121,8 @@ class _TrackResultScreenState extends State<TrackResultScreen> {
                       ]),
                     ),
                   ),
-                  if (d['canConfirmPickup'] == true) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.greenTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('track.readyForPickup'), style: const TextStyle(color: Brand.green, fontWeight: FontWeight.w800)))),
-                  if (d['rejectionReason'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.redTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('portal.rejectedBecause', params: {'reason': d['rejectionReason']}), style: const TextStyle(color: Brand.red, fontWeight: FontWeight.w800)))),
+                  if (d['canConfirmPickup'] == true) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.greenTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('track.readyForPickup'), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w800)))),
+                  if (d['rejectionReason'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.redTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('portal.rejectedBecause', params: {'reason': d['rejectionReason']}), style: TextStyle(color: Brand.red, fontWeight: FontWeight.w800)))),
                   if (estimate != null) ...[
                     const SizedBox(height: 12),
                     CustomerEstimateCard(key: ValueKey(key), estimate: estimate, onApprove: (ids) => _respond('approve', estimate, {'selectedOptionalLineIds': ids}), onDecline: (reason) => _respond('decline', estimate, {'reason': reason})),
@@ -130,7 +130,7 @@ class _TrackResultScreenState extends State<TrackResultScreen> {
                   const SizedBox(height: 12),
                   Section(title: context.tr('detail.timeline'), child: _TrackTimeline(events)),
                   const SizedBox(height: 16),
-                  Center(child: Text(context.tr('track.footer'), style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)))),
+                  Center(child: Text(context.tr('track.footer'), style: TextStyle(fontSize: 12, color: Brand.faint))),
                 ]),
               );
             }),
@@ -143,13 +143,13 @@ class _TrackTimeline extends StatelessWidget {
   final List<TimelineEvent> events;
   @override
   Widget build(BuildContext context) {
-    if (events.isEmpty) return Text(context.tr('timeline.empty'), style: const TextStyle(color: Color(0xFF6B7280)));
+    if (events.isEmpty) return Text(context.tr('timeline.empty'), style: TextStyle(color: Brand.muted));
     return Column(children: [
       for (final e in events)
         ListTile(
           dense: true,
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(Icons.circle, size: 10, color: Brand.purple),
+          leading: Icon(Icons.circle, size: 10, color: Brand.purple),
           title: Text(tr(e.titleKey ?? 'timeline.${e.kind}', def: e.title), style: const TextStyle(fontWeight: FontWeight.w800)),
           subtitle: Text(formatStamp(e.at)),
         ),

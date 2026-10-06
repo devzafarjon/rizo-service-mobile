@@ -92,9 +92,9 @@ class _MoreScreen extends StatelessWidget {
       body: ListView(padding: const EdgeInsets.all(14), children: [
         Section(
           child: Row(children: [
-            CircleAvatar(radius: 24, backgroundColor: Brand.purpleTint, child: Text(user.name.isEmpty ? '?' : user.name.characters.first.toUpperCase(), style: const TextStyle(color: Brand.purple, fontWeight: FontWeight.w900, fontSize: 20))),
+            CircleAvatar(radius: 24, backgroundColor: Brand.purpleTint, child: Text(user.name.isEmpty ? '?' : user.name.characters.first.toUpperCase(), style: TextStyle(color: Brand.purple, fontWeight: FontWeight.w900, fontSize: 20))),
             const SizedBox(width: 14),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(user.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)), Text(formatPhone(user.phone), style: const TextStyle(color: Color(0xFF6B7280)))])),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(user.name, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)), Text(formatPhone(user.phone), style: TextStyle(color: Brand.muted))])),
           ]),
         ),
         const SizedBox(height: 12),

@@ -21,9 +21,9 @@ class Labeled extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(label.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF374151), letterSpacing: 0.3))),
+        Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(label.toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.subtle, letterSpacing: 0.3))),
         child,
-        if (hint != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(hint!, style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))),
+        if (hint != null) Padding(padding: const EdgeInsets.only(top: 4), child: Text(hint!, style: TextStyle(fontSize: 12, color: Brand.muted))),
       ]),
     );
   }
@@ -39,7 +39,7 @@ class SegmentedChoice<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: Brand.surfaceAlt, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         for (final entry in options.entries)
           Expanded(
@@ -49,11 +49,11 @@ class SegmentedChoice<T> extends StatelessWidget {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 11),
                 decoration: BoxDecoration(
-                  color: entry.key == value ? Colors.white : Colors.transparent,
+                  color: entry.key == value ? Brand.surface : Colors.transparent,
                   borderRadius: BorderRadius.circular(9),
-                  boxShadow: entry.key == value ? const [BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))] : null,
+                  boxShadow: entry.key == value ? [BoxShadow(color: Brand.shadow, blurRadius: 4, offset: Offset(0, 1))] : null,
                 ),
-                child: Text(entry.value, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: entry.key == value ? Brand.ink : const Color(0xFF6B7280))),
+                child: Text(entry.value, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: entry.key == value ? Brand.ink : Brand.muted)),
               ),
             ),
           ),
@@ -143,7 +143,7 @@ class SignaturePadState extends State<SignaturePad> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Container(
         height: widget.height,
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD1D5DB))),
+        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Brand.line)),
         child: LayoutBuilder(builder: (context, constraints) {
           _size = Size(constraints.maxWidth, constraints.maxHeight);
           return GestureDetector(
@@ -167,7 +167,7 @@ class _SignaturePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Brand.ink
+      ..color = const Color(0xFF1E293B) // the pad is white paper in both modes
       ..strokeWidth = 2.6
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
@@ -298,7 +298,7 @@ Future<String?> promptDialog(BuildContext context, {required String title, Strin
       return AlertDialog(
         title: Text(title),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          if (hint != null) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(hint, style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)))),
+          if (hint != null) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(hint, style: TextStyle(fontSize: 13, color: Brand.muted))),
           TextField(controller: controller, maxLines: maxLines, minLines: 1, autofocus: true, decoration: InputDecoration(labelText: label), onChanged: (_) => setState(() {})),
         ]),
         actions: [

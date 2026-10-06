@@ -16,7 +16,7 @@ class TimelineView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.watch<Translator>();
-    if (events.isEmpty) return Text(tr('timeline.empty'), style: const TextStyle(color: Color(0xFF6B7280)));
+    if (events.isEmpty) return Text(tr('timeline.empty'), style: TextStyle(color: Brand.muted));
     return Column(children: [
       for (var i = 0; i < events.length; i++)
         IntrinsicHeight(
@@ -42,8 +42,8 @@ class TimelineView extends StatelessWidget {
     final detail = e.detailKey != null ? tr(e.detailKey!, params: {'reason': e.params['reason'], 'planned': planned, 'lasted': lasted}, def: e.detail) : e.detail;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-      Text(formatStamp(e.at), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF6B7280))),
-      if (detail != null && detail.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text(detail, style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563)))),
+      Text(formatStamp(e.at), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Brand.muted)),
+      if (detail != null && detail.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 2), child: Text(detail, style: TextStyle(fontSize: 13, color: Brand.subtle))),
     ]);
   }
 }

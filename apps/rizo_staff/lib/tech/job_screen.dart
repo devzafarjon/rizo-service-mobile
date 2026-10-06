@@ -113,7 +113,7 @@ class _JobScreenState extends State<JobScreen> {
           padding: const EdgeInsets.all(12),
           children: [
             if (repo.hasPending(widget.jobId))
-              Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(12)), child: Row(children: [const Icon(Icons.cloud_upload_outlined, color: Brand.orangeText, size: 18), const SizedBox(width: 8), Expanded(child: Text(context.tr('mobile.jobPending'), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 13)))])),
+              Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(12)), child: Row(children: [Icon(Icons.cloud_upload_outlined, color: Brand.orangeText, size: 18), const SizedBox(width: 8), Expanded(child: Text(context.tr('mobile.jobPending'), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 13)))])),
             if (twoColumns)
               Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: column(left)), const SizedBox(width: 12), Expanded(child: column(right))])
             else
@@ -131,9 +131,9 @@ class _JobScreenState extends State<JobScreen> {
     final locale = Translator.I.locale;
     return Section(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(formatRequestId(job.displayId), style: const TextStyle(color: Color(0xFF9CA3AF), fontWeight: FontWeight.w800, fontSize: 12)),
+        Text(formatRequestId(job.displayId), style: TextStyle(color: Brand.faint, fontWeight: FontWeight.w800, fontSize: 12)),
         Text(job.customer.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
-        Text('${job.product.name(locale)}${job.serialNumber != null ? ' · ${context.tr('serial.label')}: ${job.serialNumber}' : ''}', style: const TextStyle(color: Color(0xFF6B7280))),
+        Text('${job.product.name(locale)}${job.serialNumber != null ? ' · ${context.tr('serial.label')}: ${job.serialNumber}' : ''}', style: TextStyle(color: Brand.muted)),
         PhoneLink(job.customer.phone),
         const SizedBox(height: 6),
         Wrap(spacing: 6, runSpacing: 6, children: [TypeChip(job.type), LocationChip(job.locationType), WarrantyChip(job.warrantyStatus), StatusChip(job.status), if (job.isRepeat) Pill(context.tr('detail.repeat'), color: Brand.red, background: Brand.redTint)]),
@@ -141,11 +141,11 @@ class _JobScreenState extends State<JobScreen> {
         Text(job.issueDescription),
         if (job.isOnSite && job.customerLocation != null) ...[
           const SizedBox(height: 10),
-          Text(job.customerLocation!.address, style: const TextStyle(fontSize: 13, color: Color(0xFF4B5563))),
+          Text(job.customerLocation!.address, style: TextStyle(fontSize: 13, color: Brand.subtle)),
           const SizedBox(height: 8),
           OutlinedButton.icon(onPressed: () => openUri(context, job.customerLocation!.mapsUri), icon: const Icon(Icons.navigation_outlined), label: Text(context.tr('maps.directions'))),
         ],
-        if (job.scheduledAt != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.scheduledFor', params: {'time': formatStamp(job.scheduledAt)}), style: const TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800))),
+        if (job.scheduledAt != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.scheduledFor', params: {'time': formatStamp(job.scheduledAt)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800))),
         if (job.timer != null) Padding(padding: const EdgeInsets.only(top: 10), child: CountdownChip(job.timer!)),
       ]),
     );
@@ -170,7 +170,7 @@ class _JobScreenState extends State<JobScreen> {
       hint: context.tr('tech.workflowHint'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Wrap(spacing: 6, children: [StatusChip(job.status), if (data.decision != null) Pill(context.tr('decision.${data.decision}'))]),
-        if (job.status == 'awaiting_decision') Container(margin: const EdgeInsets.only(top: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Brand.amberTint, borderRadius: BorderRadius.circular(12)), child: Text(context.tr('tech.waitingDecision'), style: const TextStyle(color: Brand.amberText, fontWeight: FontWeight.w800))),
+        if (job.status == 'awaiting_decision') Container(margin: const EdgeInsets.only(top: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Brand.amberTint, borderRadius: BorderRadius.circular(12)), child: Text(context.tr('tech.waitingDecision'), style: TextStyle(color: Brand.amberText, fontWeight: FontWeight.w800))),
         for (final b in buttons) Padding(padding: const EdgeInsets.only(top: 10), child: b),
       ]),
     );
@@ -231,11 +231,11 @@ class _JobScreenState extends State<JobScreen> {
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: n.authorScope == 'customer' ? Brand.orangeTint : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(color: n.authorScope == 'customer' ? Brand.orangeTint : Brand.surfaceAlt, borderRadius: BorderRadius.circular(12)),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(n.text),
                 const SizedBox(height: 4),
-                Text('${n.authorScope == 'customer' ? context.tr('notes.customer') : (n.authorName ?? context.tr('notes.staff'))} · ${formatStamp(n.createdAt)}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                Text('${n.authorScope == 'customer' ? context.tr('notes.customer') : (n.authorName ?? context.tr('notes.staff'))} · ${formatStamp(n.createdAt)}', style: TextStyle(fontSize: 12, color: Brand.muted)),
               ]),
             ),
         ]),
@@ -247,7 +247,7 @@ class _JobScreenState extends State<JobScreen> {
       title: context.tr('job.photos'),
       hint: context.tr('job.photosHint'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (photos.isEmpty) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(context.tr('job.noPhotos'), style: const TextStyle(color: Color(0xFF6B7280)))),
+        if (photos.isEmpty) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(context.tr('job.noPhotos'), style: TextStyle(color: Brand.muted))),
         if (photos.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -291,7 +291,7 @@ class _JobScreenState extends State<JobScreen> {
       title: context.tr('catalog.services'),
       hint: context.tr('job.servicesHint', params: {'category': context.tr('categories.${data.job.product.category}', def: data.job.product.category)}),
       child: data.catalogServices.isEmpty
-          ? Text(context.tr('job.noServices'), style: const TextStyle(color: Color(0xFF6B7280)))
+          ? Text(context.tr('job.noServices'), style: TextStyle(color: Brand.muted))
           : Column(children: [
               for (final item in data.catalogServices)
                 Builder(builder: (context) {
@@ -300,7 +300,7 @@ class _JobScreenState extends State<JobScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Material(
-                      color: selected ? Brand.purpleTint : const Color(0xFFF9FAFB),
+                      color: selected ? Brand.purpleTint : Brand.surfaceSoft,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: selected ? Brand.purple : Brand.border)),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
@@ -308,10 +308,10 @@ class _JobScreenState extends State<JobScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                           child: Row(children: [
-                            Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? Brand.purple : const Color(0xFF9CA3AF)),
+                            Icon(selected ? Icons.check_circle : Icons.circle_outlined, color: selected ? Brand.purple : Brand.faint),
                             const SizedBox(width: 12),
                             Expanded(child: Text(item.names.localized(locale), style: const TextStyle(fontWeight: FontWeight.w700))),
-                            Text(formatMoney(item.price), style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF4B5563))),
+                            Text(formatMoney(item.price), style: TextStyle(fontWeight: FontWeight.w800, color: Brand.subtle)),
                           ]),
                         ),
                       ),
@@ -328,7 +328,7 @@ class _JobScreenState extends State<JobScreen> {
       title: context.tr('catalog.parts'),
       hint: context.tr('job.partsHint'),
       child: data.catalogParts.isEmpty
-          ? Text(context.tr('job.noParts'), style: const TextStyle(color: Color(0xFF6B7280)))
+          ? Text(context.tr('job.noParts'), style: TextStyle(color: Brand.muted))
           : Column(children: [
               for (final item in data.catalogParts)
                 Builder(builder: (context) {
@@ -340,7 +340,7 @@ class _JobScreenState extends State<JobScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(color: line != null ? Brand.orangeTint : const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(14), border: Border.all(color: line != null ? Brand.orange : Brand.border)),
+                    decoration: BoxDecoration(color: line != null ? Brand.orangeTint : Brand.surfaceSoft, borderRadius: BorderRadius.circular(14), border: Border.all(color: line != null ? Brand.orange : Brand.border)),
                     child: Row(children: [
                       Expanded(
                         child: InkWell(
@@ -349,8 +349,8 @@ class _JobScreenState extends State<JobScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 6),
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(item.names.localized(locale), style: const TextStyle(fontWeight: FontWeight.w700)),
-                              Text(context.tr('job.stockLine', params: {'price': formatMoney(item.price), 'count': stock}), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                              if (out) Text(data.blockZeroStock ? context.tr('job.zeroStockBlock') : context.tr('job.zeroStockWarn'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)) else if (item.lowStock) Text(context.tr('catalog.lowStock'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)),
+                              Text(context.tr('job.stockLine', params: {'price': formatMoney(item.price), 'count': stock}), style: TextStyle(fontSize: 12, color: Brand.muted)),
+                              if (out) Text(data.blockZeroStock ? context.tr('job.zeroStockBlock') : context.tr('job.zeroStockWarn'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)) else if (item.lowStock) Text(context.tr('catalog.lowStock'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)),
                             ]),
                           ),
                         ),
@@ -434,9 +434,9 @@ class _JobScreenState extends State<JobScreen> {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-        decoration: const BoxDecoration(color: Colors.white, border: Border(top: BorderSide(color: Brand.border))),
+        decoration: BoxDecoration(color: Brand.surface, border: Border(top: BorderSide(color: Brand.border))),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (missing.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(context.tr('job.stillNeed', params: {'list': list}), textAlign: TextAlign.center, style: const TextStyle(color: Brand.orangeText, fontSize: 12, fontWeight: FontWeight.w800))),
+          if (missing.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(context.tr('job.stillNeed', params: {'list': list}), textAlign: TextAlign.center, style: TextStyle(color: Brand.orangeText, fontSize: 12, fontWeight: FontWeight.w800))),
           BusyButton(
             label: context.tr('job.completeAmount', params: {'amount': formatMoney(data.costValue('chargedTotal'))}),
             icon: Icons.check_circle_outline,
@@ -472,7 +472,7 @@ class _ExtraFormState extends State<_ExtraForm> {
     if (!_open) return OutlinedButton.icon(onPressed: () => setState(() => _open = true), icon: const Icon(Icons.add), label: Text(context.tr('detail.extras')));
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(14)),
+      decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(14)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Labeled(context.tr('job.description'), child: TextField(controller: _description)),
         Labeled(context.tr('catalog.priceSom'), child: TextField(controller: _price, keyboardType: TextInputType.number)),
@@ -544,7 +544,7 @@ class _ResolutionSectionState extends State<_ResolutionSection> {
             ),
           ),
           Labeled(context.tr('job.serialNumber'), child: TextField(controller: serial, enabled: !widget.disabled, onChanged: (_) => setState(() {}))),
-          if (data.replacement != null) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('job.replacementSaved', params: {'product': Named.fromJson(data.replacement).localized(locale), 'serial': data.replacement!['serialNumber']}), style: const TextStyle(color: Brand.green, fontWeight: FontWeight.w800))),
+          if (data.replacement != null) Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('job.replacementSaved', params: {'product': Named.fromJson(data.replacement).localized(locale), 'serial': data.replacement!['serialNumber']}), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w800))),
           FilledButton(onPressed: widget.disabled || serial.text.trim().isEmpty || productId == null ? null : () => widget.onSave({'resolutionType': 'replace', 'productId': productId, 'serialNumber': serial.text.trim()}), child: Text(context.tr('job.saveReplacement'))),
         ],
       ]),

@@ -149,12 +149,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           WarrantyChip(job.warrantyStatus),
           LocationChip(job.locationType),
           if (job.isRepeat) Pill(context.tr('detail.repeat'), color: Brand.red, background: Brand.redTint),
-          if (job.isLegallyOverdue) Pill(context.tr('detail.legalOverdue'), color: Brand.red, background: const Color(0xFFFEE2E2)),
+          if (job.isLegallyOverdue) Pill(context.tr('detail.legalOverdue'), color: Brand.red, background: Brand.redTint),
           if (job.estimateStatus != null) Pill(context.tr('estimate.status.${job.estimateStatus}'), color: Brand.purple, background: Brand.purpleTint),
           if (job.payment.balance > 0) Pill(context.tr('detail.owes', params: {'amount': formatMoney(job.payment.balance)}), color: Brand.red, background: Brand.redTint),
         ]),
         if (job.timer != null) Padding(padding: const EdgeInsets.only(top: 10), child: CountdownChip(job.timer!)),
-        if (job.activePause != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF4B5563)))),
+        if (job.activePause != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: TextStyle(fontWeight: FontWeight.w700, color: Brand.subtle))),
         const SizedBox(height: 10),
         Text(job.issueDescription),
         if (trackUrl != null)
@@ -181,7 +181,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           for (final status in next)
             ActionChip(
               label: Text(statusLabel(status)),
-              backgroundColor: status == 'cancelled' ? Brand.redTint : const Color(0xFFF3F4F6),
+              backgroundColor: status == 'cancelled' ? Brand.redTint : Brand.surfaceAlt,
               labelStyle: TextStyle(fontWeight: FontWeight.w800, color: status == 'cancelled' ? Brand.red : Brand.ink),
               onPressed: () => _move(job, status),
             ),
@@ -339,13 +339,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
               child: Container(
                 margin: const EdgeInsets.only(right: 6),
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280))), Text(formatMoney(value), style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 13))]),
+                decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(12)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted)), Text(formatMoney(value), style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 13))]),
               ),
             ),
         ]),
         const SizedBox(height: 10),
-        if (payments.isEmpty) Text(context.tr('payments.none'), style: const TextStyle(color: Color(0xFF6B7280))),
+        if (payments.isEmpty) Text(context.tr('payments.none'), style: TextStyle(color: Brand.muted)),
         for (final p in payments)
           ListTile(
             dense: true,
@@ -365,16 +365,16 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       title: context.tr('notes.title'),
       hint: context.tr('notes.hint'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (notes.isEmpty) Text(context.tr('notes.none'), style: const TextStyle(color: Color(0xFF6B7280))),
+        if (notes.isEmpty) Text(context.tr('notes.none'), style: TextStyle(color: Brand.muted)),
         for (final n in notes)
           Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: n.authorScope == 'customer' ? Brand.orangeTint : (n.isVisibleToCustomer ? Brand.purpleTint : const Color(0xFFF3F4F6)), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: n.authorScope == 'customer' ? Brand.orangeTint : (n.isVisibleToCustomer ? Brand.purpleTint : Brand.surfaceAlt), borderRadius: BorderRadius.circular(12)),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(n.text),
               const SizedBox(height: 4),
-              Text('${n.authorScope == 'customer' ? context.tr('notes.customer') : (n.authorName ?? context.tr('notes.staff'))} · ${formatStamp(n.createdAt)} · ${n.authorScope == 'customer' ? context.tr('notes.fromCustomer') : (n.isVisibleToCustomer ? context.tr('notes.visible') : context.tr('notes.internal'))}', style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+              Text('${n.authorScope == 'customer' ? context.tr('notes.customer') : (n.authorName ?? context.tr('notes.staff'))} · ${formatStamp(n.createdAt)} · ${n.authorScope == 'customer' ? context.tr('notes.fromCustomer') : (n.isVisibleToCustomer ? context.tr('notes.visible') : context.tr('notes.internal'))}', style: TextStyle(fontSize: 12, color: Brand.muted)),
             ]),
           ),
         _NoteForm(onSubmit: (text, visible) => _call(() => _api.post('$_path/notes', body: {'text': text, 'visibleToCustomer': visible}), success: tr('notes.saved'))),
@@ -462,17 +462,17 @@ class _DecisionFormState extends State<_DecisionForm> {
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Material(
-            color: decision == option ? Brand.purpleTint : Colors.white,
+            color: decision == option ? Brand.purpleTint : Brand.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: decision == option ? Brand.purple : Brand.border)),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
               onTap: () => setState(() => decision = option),
-              child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(context.tr('decision.$option'), style: const TextStyle(fontWeight: FontWeight.w800)), Text(context.tr('decision.${option}Hint'), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))])),
+              child: Padding(padding: const EdgeInsets.all(12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(context.tr('decision.$option'), style: const TextStyle(fontWeight: FontWeight.w800)), Text(context.tr('decision.${option}Hint'), style: TextStyle(fontSize: 12, color: Brand.muted))])),
             ),
           ),
         ),
       if (decision == 'warranty_repair' && _expired) CheckboxListTile(contentPadding: EdgeInsets.zero, controlAffinity: ListTileControlAffinity.leading, value: goodwill, onChanged: (v) => setState(() => goodwill = v ?? false), title: Text(context.tr('decision.goodwill'), style: const TextStyle(fontWeight: FontWeight.w800)), subtitle: Text(context.tr('decision.goodwillHint'))),
-      if (decision == 'paid_repair') Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('decision.paidNext'), style: const TextStyle(color: Color(0xFF4B5563)))),
+      if (decision == 'paid_repair') Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('decision.paidNext'), style: TextStyle(color: Brand.subtle))),
       if (decision == 'replace') Labeled(context.tr('decision.newSerial'), hint: context.tr('decision.newSerialHint'), child: TextField(controller: _serial)),
       if (decision == 'refund') ...[
         Labeled(context.tr('decision.refundAmount'), child: TextField(controller: _amount, keyboardType: TextInputType.number)),

@@ -51,7 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       const SizedBox(height: 10),
       Center(child: Text(context.tr('brand.service'), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900))),
       const SizedBox(height: 4),
-      Center(child: Text(context.tr('mobile.customerSubtitle'), textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6B7280)))),
+      Center(child: Text(context.tr('mobile.customerSubtitle'), textAlign: TextAlign.center, style: TextStyle(color: Brand.muted))),
       const SizedBox(height: 26),
       Labeled(context.tr('common.phone'), child: TextField(controller: _phone, keyboardType: TextInputType.phone, autofillHints: const [AutofillHints.username], textInputAction: TextInputAction.next, decoration: const InputDecoration(hintText: '+998 90 123 45 67'))),
       Labeled(
@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
           decoration: InputDecoration(suffixIcon: IconButton(icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscure = !_obscure))),
         ),
       ),
-      if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: const TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
+      if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
       BusyButton(label: context.tr('common.signIn'), onPressed: _submit),
       const SizedBox(height: 8),
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -117,7 +117,7 @@ class _SignupScreenState extends State<SignupScreen> {
       Labeled(context.tr('common.phone'), child: TextField(controller: _phone, keyboardType: TextInputType.phone)),
       Labeled(context.tr('common.password'), hint: context.tr('errors.passwordLength'), child: TextField(controller: _password, obscureText: true)),
       Labeled('${context.tr('common.address')} (${context.tr('common.optional')})', child: TextField(controller: _address)),
-      if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: const TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
+      if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
       BusyButton(label: context.tr('mobile.signup'), onPressed: _submit),
     ]);
   }
@@ -149,13 +149,13 @@ class _ForgotScreenState extends State<ForgotScreen> {
     return _frame(context, back: true, children: [
       Text(context.tr('mobile.forgot'), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
       const SizedBox(height: 8),
-      Text(context.tr('mobile.forgotHint'), style: const TextStyle(color: Color(0xFF6B7280))),
+      Text(context.tr('mobile.forgotHint'), style: TextStyle(color: Brand.muted)),
       const SizedBox(height: 18),
       if (_sent)
-        Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.greenTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('mobile.forgotSent'), style: const TextStyle(color: Brand.green, fontWeight: FontWeight.w800)))
+        Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.greenTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('mobile.forgotSent'), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w800)))
       else ...[
         Labeled(context.tr('common.phone'), child: TextField(controller: _phone, keyboardType: TextInputType.phone)),
-        if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: const TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
+        if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
         BusyButton(label: context.tr('mobile.sendPassword'), onPressed: _submit),
       ],
     ]);

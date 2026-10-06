@@ -7,6 +7,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
   await Translator.I.load();
+  await ThemeController.I.load();
   final session = CustomerSession();
   await session.restore();
   runApp(CustomerApp(session: session));

@@ -102,13 +102,13 @@ class _EstimateBuilderState extends State<EstimateBuilder> {
         ),
       ]),
       const SizedBox(height: 12),
-      if (_lines.isEmpty) Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: const Color(0xFFF9FAFB), borderRadius: BorderRadius.circular(12)), child: Text(context.tr('estimate.empty'), textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF6B7280)))),
+      if (_lines.isEmpty) Container(padding: const EdgeInsets.all(18), decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(12)), child: Text(context.tr('estimate.empty'), textAlign: TextAlign.center, style: TextStyle(color: Brand.muted))),
       for (var i = 0; i < _lines.length; i++) _lineTile(i),
       Labeled(context.tr('estimate.note'), child: TextField(controller: _note, maxLines: 2, maxLength: 500)),
       Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(color: Brand.purpleTint, borderRadius: BorderRadius.circular(12)),
-        child: Text('${context.tr('estimate.total')}: ${formatMoney(_total)}${_optionalTotal > 0 ? '  + ${formatMoney(_optionalTotal)} ${context.tr('estimate.ifChosen')}' : ''}', style: const TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF5A0085))),
+        child: Text('${context.tr('estimate.total')}: ${formatMoney(_total)}${_optionalTotal > 0 ? '  + ${formatMoney(_optionalTotal)} ${context.tr('estimate.ifChosen')}' : ''}', style: TextStyle(fontWeight: FontWeight.w900, color: Brand.purpleDark)),
       ),
       const SizedBox(height: 12),
       BusyButton(label: context.tr('estimate.saveSend'), icon: Icons.send_outlined, enabled: _lines.isNotEmpty, onPressed: () => _submit(true)),
@@ -124,7 +124,7 @@ class _EstimateBuilderState extends State<EstimateBuilder> {
       decoration: BoxDecoration(border: Border.all(color: Brand.border), borderRadius: BorderRadius.circular(12)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: const TextStyle(fontWeight: FontWeight.w800)), Text(context.tr('estimate.kind.${line.kind}'), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)))])),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(line.name, style: const TextStyle(fontWeight: FontWeight.w800)), Text(context.tr('estimate.kind.${line.kind}'), style: TextStyle(fontSize: 12, color: Brand.muted))])),
           IconButton(onPressed: () => setState(() => _lines.removeAt(i)), icon: const Icon(Icons.delete_outline), tooltip: context.tr('common.remove')),
         ]),
         Row(children: [
@@ -161,12 +161,12 @@ class EstimateCard extends StatelessWidget {
     final approved = estimate.status == 'approved';
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: const Color(0xFFFAFAFA), borderRadius: BorderRadius.circular(14), border: Border.all(color: Brand.border)),
+      decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(14), border: Border.all(color: Brand.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Pill(context.tr('estimate.status.${estimate.status}'), color: approved ? Brand.green : (estimate.status == 'declined' || estimate.status == 'expired' ? Brand.red : Brand.purple), background: approved ? Brand.greenTint : (estimate.status == 'declined' || estimate.status == 'expired' ? Brand.redTint : Brand.purpleTint)),
           const Spacer(),
-          if (estimate.validUntil != null && estimate.status == 'sent') Text('${context.tr('estimate.validUntil')} ${formatStamp(estimate.validUntil)}', style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+          if (estimate.validUntil != null && estimate.status == 'sent') Text('${context.tr('estimate.validUntil')} ${formatStamp(estimate.validUntil)}', style: TextStyle(fontSize: 11, color: Brand.muted)),
         ]),
         if (estimate.note != null && estimate.note!.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(estimate.note!, style: const TextStyle(fontSize: 13))),
         const SizedBox(height: 8),
@@ -177,10 +177,10 @@ class EstimateCard extends StatelessWidget {
               Expanded(
                 child: Text.rich(TextSpan(children: [
                   TextSpan(text: line.label(locale)),
-                  if (line.quantity > 1) TextSpan(text: ' × ${line.quantity}', style: const TextStyle(color: Color(0xFF6B7280))),
-                  if (line.isOptional) TextSpan(text: '  ${context.tr('estimate.optional')}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280))),
-                  if (line.kind == 'part' && approved && line.isSelected && !line.isFulfilled) TextSpan(text: '  ${context.tr('estimate.onOrder')}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Brand.amberText)),
-                ]), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, decoration: approved && !line.isSelected ? TextDecoration.lineThrough : null, color: approved && !line.isSelected ? const Color(0xFF9CA3AF) : Brand.ink)),
+                  if (line.quantity > 1) TextSpan(text: ' × ${line.quantity}', style: TextStyle(color: Brand.muted)),
+                  if (line.isOptional) TextSpan(text: '  ${context.tr('estimate.optional')}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted)),
+                  if (line.kind == 'part' && approved && line.isSelected && !line.isFulfilled) TextSpan(text: '  ${context.tr('estimate.onOrder')}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Brand.amberText)),
+                ]), style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, decoration: approved && !line.isSelected ? TextDecoration.lineThrough : null, color: approved && !line.isSelected ? Brand.faint : Brand.ink)),
               ),
               Text(formatMoney(line.total), style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
             ]),
@@ -188,7 +188,7 @@ class EstimateCard extends StatelessWidget {
         const Divider(),
         Row(children: [Text(context.tr('estimate.total'), style: const TextStyle(fontWeight: FontWeight.w900)), const Spacer(), Text(formatMoney(estimate.total), style: const TextStyle(fontWeight: FontWeight.w900))]),
         if (estimate.status == 'declined' && estimate.declineReason != null && estimate.declineReason!.isNotEmpty)
-          Padding(padding: const EdgeInsets.only(top: 6), child: Text(context.tr('estimate.declinedBecause', params: {'reason': estimate.declineReason}), style: const TextStyle(color: Brand.red, fontSize: 12, fontWeight: FontWeight.w700))),
+          Padding(padding: const EdgeInsets.only(top: 6), child: Text(context.tr('estimate.declinedBecause', params: {'reason': estimate.declineReason}), style: TextStyle(color: Brand.red, fontSize: 12, fontWeight: FontWeight.w700))),
         if (actions.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 12), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: actions)),
       ]),
     );

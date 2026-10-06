@@ -89,7 +89,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             final n = items[i];
                             final unread = n['isRead'] != true;
                             return Card(
-                              color: unread ? Brand.purpleTint : Colors.white,
+                              color: unread ? Brand.purpleTint : Brand.surface,
                               child: ListTile(
                                 title: Text(_text(n), style: TextStyle(fontWeight: unread ? FontWeight.w800 : FontWeight.w600)),
                                 subtitle: Text(formatStamp(asDate(n['createdAt']))),

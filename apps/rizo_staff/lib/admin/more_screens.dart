@@ -72,14 +72,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
                     if (lowStock.isNotEmpty)
                       Section(
                         title: context.tr('alerts.lowStock'),
-                        child: Column(children: [for (final p in lowStock) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text(Named.fromJson(p).localized(locale), style: const TextStyle(fontWeight: FontWeight.w700)), trailing: Text('${p['stockQuantity']} / ${p['lowStockThreshold']}', style: const TextStyle(fontWeight: FontWeight.w900, color: Brand.red)))]),
+                        child: Column(children: [for (final p in lowStock) ListTile(dense: true, contentPadding: EdgeInsets.zero, title: Text(Named.fromJson(p).localized(locale), style: const TextStyle(fontWeight: FontWeight.w700)), trailing: Text('${p['stockQuantity']} / ${p['lowStockThreshold']}', style: TextStyle(fontWeight: FontWeight.w900, color: Brand.red)))]),
                       ),
                     if (alerts.isEmpty && lowStock.isEmpty) SizedBox(height: 300, child: EmptyView(title: context.tr('alerts.empty'), body: context.tr('alerts.emptyBody'), icon: Icons.notifications_none)),
                     for (final a in alerts)
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Card(
-                          color: a.isRead ? Colors.white : Brand.purpleTint,
+                          color: a.isRead ? Brand.surface : Brand.purpleTint,
                           child: ListTile(
                             title: Text(_text(a), style: TextStyle(fontWeight: a.isRead ? FontWeight.w600 : FontWeight.w800)),
                             subtitle: Text(formatStamp(a.createdAt)),
@@ -145,10 +145,10 @@ class _TechniciansScreenState extends State<TechniciansScreen> {
                             Card(
                               margin: const EdgeInsets.only(bottom: 8),
                               child: ListTile(
-                                leading: CircleAvatar(backgroundColor: t.isAvailable ? Brand.greenTint : const Color(0xFFF3F4F6), child: Icon(t.isAvailable ? Icons.check : Icons.pause, color: t.isAvailable ? Brand.green : const Color(0xFF6B7280))),
+                                leading: CircleAvatar(backgroundColor: t.isAvailable ? Brand.greenTint : Brand.surfaceAlt, child: Icon(t.isAvailable ? Icons.check : Icons.pause, color: t.isAvailable ? Brand.green : Brand.muted)),
                                 title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                                 subtitle: Text('${t.technicianType == null ? '' : '${context.tr('techType.${t.technicianType}')} · '}${t.isAvailable ? context.tr('common.free') : context.tr('shell.busy')} · ${context.tr('kanban.openJobs', params: {'count': t.openJobCount})}'),
-                                trailing: IconButton(icon: const Icon(Icons.call_outlined, color: Brand.purple), onPressed: () => openUri(context, telUri(t.phone))),
+                                trailing: IconButton(icon: Icon(Icons.call_outlined, color: Brand.purple), onPressed: () => openUri(context, telUri(t.phone))),
                               ),
                             ),
                         ]),
@@ -231,7 +231,7 @@ class _PartOrdersScreenState extends State<PartOrdersScreen> {
                                     padding: const EdgeInsets.all(14),
                                     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                       Row(children: [Expanded(child: Text('${o.part.localized(locale)} × ${o.quantity}', style: const TextStyle(fontWeight: FontWeight.w900))), Pill(context.tr('parts.status.${o.status}'))]),
-                                      if (o.requestDisplayId != null) Text('${context.tr('parts.forRequest')}: ${formatRequestId(o.requestDisplayId!)}', style: const TextStyle(color: Color(0xFF6B7280), fontSize: 13)),
+                                      if (o.requestDisplayId != null) Text('${context.tr('parts.forRequest')}: ${formatRequestId(o.requestDisplayId!)}', style: TextStyle(color: Brand.muted, fontSize: 13)),
                                       if (o.status == 'requested' || o.status == 'ordered')
                                         Padding(
                                           padding: const EdgeInsets.only(top: 10),
@@ -304,7 +304,7 @@ class _CustomersScreenState extends State<CustomersScreen> {
                         return ListTile(
                           title: Text(asString(c['name']), style: const TextStyle(fontWeight: FontWeight.w800)),
                           subtitle: Text('${formatPhone(asString(c['phone']))} · ${c['requestsCount'] ?? 0}'),
-                          trailing: IconButton(icon: const Icon(Icons.call_outlined, color: Brand.purple), onPressed: () => openUri(context, telUri(asString(c['phone'])))),
+                          trailing: IconButton(icon: Icon(Icons.call_outlined, color: Brand.purple), onPressed: () => openUri(context, telUri(asString(c['phone'])))),
                         );
                       },
                     ),

@@ -12,9 +12,11 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('mobile.settings'))),
       body: ListView(padding: const EdgeInsets.all(16), children: [
-        Section(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(user.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)), Text(formatPhone(user.phone), style: const TextStyle(color: Color(0xFF6B7280))), if (user.address != null) Text(user.address!, style: const TextStyle(fontSize: 13))])),
+        Section(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(user.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)), Text(formatPhone(user.phone), style: TextStyle(color: Brand.muted)), if (user.address != null) Text(user.address!, style: const TextStyle(fontSize: 13))])),
         const SizedBox(height: 12),
         Section(title: context.tr('common.language'), child: SegmentedChoice<String>(value: translator.locale, options: {for (final c in supportedLocales) c: context.tr('languages.$c')}, onChanged: (c) => session.saveLocale(c))),
+        const SizedBox(height: 12),
+        const ThemeModeSetting(),
         if (AppConfig.canChangeServer) ...[const SizedBox(height: 12), Card(child: ListTile(leading: const Icon(Icons.dns_outlined), title: Text(context.tr('mobile.serverTitle')), subtitle: Text(AppConfig.baseUrl), onTap: () => showServerDialog(context)))],
         const SizedBox(height: 24),
         BusyButton(

@@ -30,9 +30,9 @@ class _CustomerEstimateCardState extends State<CustomerEstimateCard> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Row(children: [
           Expanded(child: Text(context.tr('portal.estimateTitle').toUpperCase(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13))),
-          Pill(context.tr('estimate.status.${e.status}'), color: approved ? Brand.green : (e.status == 'declined' || e.status == 'expired' ? Brand.red : Brand.purple), background: Colors.white),
+          Pill(context.tr('estimate.status.${e.status}'), color: approved ? Brand.green : (e.status == 'declined' || e.status == 'expired' ? Brand.red : Brand.purple), background: Brand.surface),
         ]),
-        if (e.canRespond && e.validUntil != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('portal.estimateAsk', params: {'date': formatStamp(e.validUntil)}), style: const TextStyle(color: Color(0xFF8A4B00), fontWeight: FontWeight.w800))),
+        if (e.canRespond && e.validUntil != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('portal.estimateAsk', params: {'date': formatStamp(e.validUntil)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800))),
         if (e.note != null && e.note!.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(e.note!)),
         const SizedBox(height: 10),
         for (final line in e.lines)
@@ -48,11 +48,11 @@ class _CustomerEstimateCardState extends State<CustomerEstimateCard> {
                   Expanded(
                     child: Text.rich(TextSpan(children: [
                       TextSpan(text: line.label(locale)),
-                      if (line.quantity > 1) TextSpan(text: ' × ${line.quantity}', style: const TextStyle(color: Color(0xFF6B7280))),
-                      if (line.isOptional) TextSpan(text: '  ${context.tr('estimate.optional')}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFF6B7280))),
-                    ]), style: TextStyle(fontWeight: FontWeight.w600, decoration: approved && !line.isSelected ? TextDecoration.lineThrough : null, color: on ? Brand.ink : const Color(0xFF9CA3AF))),
+                      if (line.quantity > 1) TextSpan(text: ' × ${line.quantity}', style: TextStyle(color: Brand.muted)),
+                      if (line.isOptional) TextSpan(text: '  ${context.tr('estimate.optional')}', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted)),
+                    ]), style: TextStyle(fontWeight: FontWeight.w600, decoration: approved && !line.isSelected ? TextDecoration.lineThrough : null, color: on ? Brand.ink : Brand.faint)),
                   ),
-                  Text(formatMoney(line.quantity * line.unitPrice), style: TextStyle(fontWeight: FontWeight.w800, color: on ? Brand.ink : const Color(0xFF9CA3AF))),
+                  Text(formatMoney(line.quantity * line.unitPrice), style: TextStyle(fontWeight: FontWeight.w800, color: on ? Brand.ink : Brand.faint)),
                 ]),
               ),
             );
@@ -76,7 +76,7 @@ class _CustomerEstimateCardState extends State<CustomerEstimateCard> {
               Expanded(flex: 2, child: BusyButton(label: context.tr('portal.approve', params: {'amount': formatMoney(_total)}), icon: Icons.check, onPressed: () => widget.onApprove(chosen))),
             ]),
           const SizedBox(height: 8),
-          Text(context.tr('portal.estimateFine'), style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+          Text(context.tr('portal.estimateFine'), style: TextStyle(fontSize: 12, color: Brand.muted)),
         ],
       ]),
     );

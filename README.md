@@ -8,6 +8,10 @@ endpoints, same roles, same statuses, same translations (uz / ru / en).
 | **RIZO Texnik** (`apps/rizo_staff`) | Technicians (tablet or phone), admin / dispatcher and front desk (phone or tablet) | Tablet + phone | Technician: four-column board (tablet) or tabs (phone), job screen with photos, services, parts, extras, outcome, estimate, part orders, QR scan, earnings, schedule, **offline mode**. Admin / front desk: dashboard, all requests with filters, request detail (assign, status, decision, estimate, payments, notes, pickup), new request with intake, alerts, technicians, part orders, customers, visit calendar |
 | **RIZO Mijoz** (`apps/rizo_customer`) | Customers | Phone | Sign in / sign up / forgot password, my requests with live status, approve or decline an estimate (choose optional lines), messages to the service, "technician is on the way", payment info, pickup confirmation (tap or signature), rating, new request in three steps with photos, register a product, notifications, track a request without signing in, service centers |
 
+Both apps have a **dark mode** (Settings → Theme: light / dark / follow the device, saved on the device). The website has the
+same switch next to the language menu. Colors live in `packages/rizo_core/lib/src/theme.dart`: use `Brand.surface`, `Brand.muted`,
+`Brand.ink` … instead of hard-coded colors so both modes keep working (`Colors.white` is only for text on purple buttons).
+
 `packages/rizo_core` holds everything shared: API client, session, translations, status rules, models, theme, widgets and
 the offline queue.
 
@@ -81,7 +85,7 @@ cd ../rizo_customer && flutter analyze && flutter test
 * **Application IDs**: `uz.rizo.rizo_staff` / `uz.rizo.rizo_customer`. Change them once, before the first store upload
   (Android: `android/app/build.gradle.kts`; iOS: Xcode → Runner → Signing).
 * **Signing**: an Android upload keystore and Apple signing certificates.
-* **Push notifications** are not included. They need a Firebase project (`google-services.json` /
+* **Push notifications** are not included (decided: staff get *all* notifications; see `PUSH_NOTIFICATIONS.md`). They need a Firebase project (`google-services.json` /
   `GoogleService-Info.plist`) and a server part that sends them. Today the apps refresh every 30–60 seconds while open,
   and customers still get SMS.
 * **iOS builds** need a Mac with Xcode (accept its license once: `sudo xcodebuild -license accept`).

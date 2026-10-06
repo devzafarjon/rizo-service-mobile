@@ -111,7 +111,7 @@ class _MoreScreen extends StatelessWidget {
         ),
         tile(Icons.settings_outlined, context.tr('mobile.settings'), const SettingsScreen()),
         const SizedBox(height: 8),
-        Center(child: Text('${user.name} · ${formatPhone(user.phone)}', style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12))),
+        Center(child: Text('${user.name} · ${formatPhone(user.phone)}', style: TextStyle(color: Brand.faint, fontSize: 12))),
       ]),
     );
   }
