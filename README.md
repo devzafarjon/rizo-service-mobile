@@ -77,7 +77,7 @@ cd ../rizo_customer && flutter analyze && flutter test
 * **Store accounts**: Apple Developer Program (99 USD / year) and Google Play Console (25 USD once).
 * **App icon**: made from the RIZO SERVICE lockup (`tool/icon/icon.png`, 1024 × 1024, plus an Android adaptive
   foreground). To change it, replace those files and run `dart run flutter_launcher_icons` in each app.
-  A custom splash screen is not set up (the default white one is used).
+  The splash screen (logo on white) comes from `flutter_native_splash`; regenerate it with `dart run flutter_native_splash:create`.
 * **Application IDs**: `uz.rizo.rizo_staff` / `uz.rizo.rizo_customer`. Change them once, before the first store upload
   (Android: `android/app/build.gradle.kts`; iOS: Xcode → Runner → Signing).
 * **Signing**: an Android upload keystore and Apple signing certificates.
@@ -85,4 +85,8 @@ cd ../rizo_customer && flutter analyze && flutter test
   `GoogleService-Info.plist`) and a server part that sends them. Today the apps refresh every 30–60 seconds while open,
   and customers still get SMS.
 * **iOS builds** need a Mac with Xcode (accept its license once: `sudo xcodebuild -license accept`).
-* **Android builds** need the Android SDK (Android Studio).
+* **Android builds** need Android Studio. If Flutter cannot find Java, point it at the one bundled with Android Studio:
+  `flutter config --jdk-dir "/Applications/Android Studio.app/Contents/jbr/Contents/Home"`. A debug build for the emulator:
+  `flutter build apk --debug --dart-define=API_URL=http://10.0.2.2:4000`. Tested: the technician/admin app on an Android 17 emulator.
+* **Store texts** (uz / ru / en) and the review checklist are in `STORE.md`. The push notification plan is in
+  `PUSH_NOTIFICATIONS.md`.

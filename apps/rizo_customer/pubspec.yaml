@@ -59,6 +59,7 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
   shared_preferences: any
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 flutter:
 
   # The following line ensures that the Material Icons font is
@@ -109,3 +110,12 @@ flutter_launcher_icons:
   remove_alpha_ios: true
   adaptive_icon_background: "#FFFFFF"
   adaptive_icon_foreground: "../../tool/icon/icon_foreground.png"
+
+# Splash screen: the RIZO SERVICE lockup on white (source image in ../../tool/icon).
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: "../../tool/icon/icon_foreground.png"
+  android_12:
+    color: "#FFFFFF"
+    image: "../../tool/icon/icon_foreground.png"
+  web: false
