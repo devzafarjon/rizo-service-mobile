@@ -8,7 +8,10 @@ import 'request_detail_screen.dart';
 
 /// All requests for the office: search, filter by stage and type, pull to refresh.
 class RequestsScreen extends StatefulWidget {
-  const RequestsScreen({super.key});
+  const RequestsScreen({super.key, this.bell});
+
+  /// The notifications bell (admin only), shown in the top bar.
+  final Widget? bell;
   @override
   State<RequestsScreen> createState() => _RequestsScreenState();
 }
@@ -73,7 +76,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
   Widget build(BuildContext context) {
     final shown = jobs.where(_match).toList();
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.requests')), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
+      appBar: AppBar(title: Text(context.tr('nav.requests')), actions: [?widget.bell, IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Brand.purple,
         foregroundColor: Colors.white,

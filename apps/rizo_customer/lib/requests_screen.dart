@@ -6,7 +6,8 @@ import 'package:rizo_core/rizo_core.dart';
 import 'request_detail_screen.dart';
 
 class RequestsScreen extends StatefulWidget {
-  const RequestsScreen({super.key, required this.onNew});
+  const RequestsScreen({super.key, required this.onNew, this.bell});
+  final Widget? bell;
   final VoidCallback onNew;
   @override
   State<RequestsScreen> createState() => RequestsScreenState();
@@ -58,7 +59,7 @@ class RequestsScreenState extends State<RequestsScreen> {
     final pendingEstimates = items.where((r) => r.estimate?.canRespond == true).toList();
     final pendingFeedback = items.where((r) => r.canFeedback).length;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('portal.homeTitle')), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
+      appBar: AppBar(title: Text(context.tr('portal.homeTitle')), actions: [?widget.bell, IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
       body: loading
           ? const LoadingView()
           : error != null && items.isEmpty

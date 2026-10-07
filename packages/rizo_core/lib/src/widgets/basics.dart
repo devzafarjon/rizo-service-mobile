@@ -429,3 +429,17 @@ class ThemeModeSetting extends StatelessWidget {
     );
   }
 }
+
+/// The bell in the top bar of the main screens: opens the notifications screen, with the unread count on top.
+class NotificationBell extends StatelessWidget {
+  const NotificationBell({super.key, required this.count, required this.onPressed});
+  final int count;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    context.watch<Translator>();
+    final icon = count > 0 ? Badge(label: Text(count > 99 ? '99+' : '$count'), child: const Icon(Icons.notifications_none)) : const Icon(Icons.notifications_none);
+    return IconButton(onPressed: onPressed, tooltip: context.tr('notifications.aria'), icon: icon);
+  }
+}

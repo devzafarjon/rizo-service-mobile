@@ -53,12 +53,16 @@ class _HomeShellState extends State<HomeShell> {
     }
   }
 
+  Future<void> _openNotifications() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NotificationsScreen(onChanged: _unread)));
+    _unread();
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<Translator>();
     final pages = <Widget>[
-      RequestsScreen(key: _requests, onNew: _newRequest),
-      NotificationsScreen(onChanged: _unread),
+      RequestsScreen(key: _requests, onNew: _newRequest, bell: NotificationBell(count: unread, onPressed: _openNotifications)),
       const _MoreScreen(),
     ];
     return Scaffold(
@@ -66,13 +70,9 @@ class _HomeShellState extends State<HomeShell> {
       floatingActionButton: index == 0 ? FloatingActionButton.extended(backgroundColor: Brand.purple, foregroundColor: Colors.white, onPressed: _newRequest, icon: const Icon(Icons.add), label: Text(tr('nav.newRequest'))) : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: index,
-        onDestinationSelected: (i) {
-          setState(() => index = i);
-          if (i == 1) _unread();
-        },
+        onDestinationSelected: (i) => setState(() => index = i),
         destinations: [
           NavigationDestination(icon: const Icon(Icons.assignment_outlined), selectedIcon: const Icon(Icons.assignment), label: tr('nav.myRequests')),
-          NavigationDestination(icon: unread > 0 ? Badge(label: Text('$unread'), child: const Icon(Icons.notifications_none)) : const Icon(Icons.notifications_none), label: tr('nav.notifications')),
           NavigationDestination(icon: const Icon(Icons.menu), label: tr('mobile.more')),
         ],
       ),

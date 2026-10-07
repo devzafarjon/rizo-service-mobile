@@ -46,14 +46,19 @@ class _AdminHomeState extends State<AdminHome> {
     } catch (_) {}
   }
 
+  Future<void> _openAlerts() async {
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AlertsScreen()));
+    _unread();
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<Translator>();
     final user = context.watch<StaffSession>().user!;
+    final bell = user.isAdmin ? NotificationBell(count: unread, onPressed: _openAlerts) : null;
     final tabs = <({String label, IconData icon, Widget page, int badge})>[
-      if (user.isAdmin) (label: tr('nav.dashboard'), icon: Icons.dashboard_outlined, page: const DashboardScreen(), badge: 0),
-      (label: tr('nav.requests'), icon: Icons.assignment_outlined, page: const RequestsScreen(), badge: 0),
-      if (user.isAdmin) (label: tr('nav.notifications'), icon: Icons.notifications_none, page: AlertsScreen(key: ValueKey(unread)), badge: unread),
+      if (user.isAdmin) (label: tr('nav.dashboard'), icon: Icons.dashboard_outlined, page: DashboardScreen(bell: bell), badge: 0),
+      (label: tr('nav.requests'), icon: Icons.assignment_outlined, page: RequestsScreen(bell: bell), badge: 0),
       (label: tr('mobile.more'), icon: Icons.menu, page: const _MoreScreen(), badge: 0),
     ];
     final current = index.clamp(0, tabs.length - 1);

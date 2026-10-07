@@ -3,7 +3,10 @@ import 'package:rizo_core/rizo_core.dart';
 
 /// Key numbers for the chosen period, with the change against the period before.
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({super.key, this.bell});
+
+  /// The notifications bell (admin only), shown in the top bar.
+  final Widget? bell;
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
@@ -45,7 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final d = data;
     final locale = context.watch<Translator>().locale;
     return Scaffold(
-      appBar: AppBar(title: Text(context.tr('nav.dashboard')), actions: [IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
+      appBar: AppBar(title: Text(context.tr('nav.dashboard')), actions: [?widget.bell, IconButton(onPressed: _load, icon: const Icon(Icons.refresh))]),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: const EdgeInsets.all(12), children: [
