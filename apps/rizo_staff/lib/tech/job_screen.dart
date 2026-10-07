@@ -93,6 +93,7 @@ class _JobScreenState extends State<JobScreen> {
       if (repair && !done) _workflow(data),
       if (repair) _defect(data, done),
       if (repair) _estimate(data, done),
+      if (!data.checklist.isEmpty) _checklist(data, repair, done),
       if (data.notes.isNotEmpty) _notes(data),
     ];
     final right = <Widget>[
@@ -322,6 +323,45 @@ class _JobScreenState extends State<JobScreen> {
     );
   }
 
+  /// Steps to tick off; required ones must be ticked before a repair can be completed.
+  Widget _checklist(JobWork data, bool repair, bool done) {
+    final locale = Translator.I.locale;
+    final list = data.checklist;
+    Widget group(String kind, List<ChecklistItem> items, Set<String> checked) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.only(bottom: 6), child: Text(context.tr('checklist.$kind').toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.muted, letterSpacing: 0.4))),
+        for (final item in items)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(color: checked.contains(item.id) ? Brand.greenTint : Brand.surfaceSoft, borderRadius: BorderRadius.circular(14), border: Border.all(color: checked.contains(item.id) ? Brand.green : Brand.border)),
+            child: CheckboxListTile(
+              dense: false,
+              controlAffinity: ListTileControlAffinity.leading,
+              value: checked.contains(item.id),
+              onChanged: done || _busy
+                  ? null
+                  : (value) {
+                      final next = {...checked};
+                      value == true ? next.add(item.id) : next.remove(item.id);
+                      _perform('checklist', {'kind': kind, 'checked': next.toList()});
+                    },
+              title: Text(item.text(locale), style: const TextStyle(fontWeight: FontWeight.w700)),
+              secondary: item.required ? Pill(context.tr('checklists.required'), color: Brand.purple, background: Brand.purpleTint) : null,
+            ),
+          ),
+      ]);
+    }
+
+    return Section(
+      title: context.tr('checklist.title'),
+      hint: context.tr('checklist.hint'),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (repair && list.diagnosis.isNotEmpty) group('diagnosis', list.diagnosis, list.diagnosisChecked),
+        if (list.completion.isNotEmpty) group('completion', list.completion, list.completionChecked),
+      ]),
+    );
+  }
+
   Widget _parts(JobWork data, bool done) {
     final locale = Translator.I.locale;
     return Section(
@@ -334,7 +374,8 @@ class _JobScreenState extends State<JobScreen> {
                 Builder(builder: (context) {
                   final line = data.partLines.cast<Json?>().firstWhere((l) => l!['sparePartId'] == item.id, orElse: () => null);
                   final stock = item.stockQuantity ?? 0;
-                  final out = stock <= 0;
+                  // Parts the technician carries count as available even when the warehouse has none left.
+                  final out = item.available <= 0;
                   final blocked = out && data.blockZeroStock && line == null;
                   final qty = line == null ? 0 : asInt(line['quantity']);
                   return Container(
@@ -350,6 +391,7 @@ class _JobScreenState extends State<JobScreen> {
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                               Text(item.names.localized(locale), style: const TextStyle(fontWeight: FontWeight.w700)),
                               Text(context.tr('job.stockLine', params: {'price': formatMoney(item.price), 'count': stock}), style: TextStyle(fontSize: 12, color: Brand.muted)),
+                              if (item.carried > 0) Text(context.tr('job.carried', params: {'count': item.carried}), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.purple)),
                               if (out) Text(data.blockZeroStock ? context.tr('job.zeroStockBlock') : context.tr('job.zeroStockWarn'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)) else if (item.lowStock) Text(context.tr('catalog.lowStock'), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.amberText)),
                             ]),
                           ),

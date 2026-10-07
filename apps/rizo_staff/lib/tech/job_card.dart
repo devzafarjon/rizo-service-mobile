@@ -62,7 +62,7 @@ class JobCard extends StatelessWidget {
     final widgets = <Widget>[];
     if (job.arrivedAt == null) {
       if (job.enRouteAt != null) {
-        widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.enRouteSince', params: {'time': formatStamp(job.enRouteAt)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))));
+        widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: Text('${context.tr('tech.enRouteSince', params: {'time': formatStamp(job.enRouteAt)})}${job.etaMinutes != null ? ' · ${context.tr('tech.etaMinutes', params: {'minutes': job.etaMinutes})}' : ''}', style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))));
       } else {
         widgets.add(Padding(padding: const EdgeInsets.only(top: 8), child: _Wide(label: context.tr('tech.enRoute'), icon: Icons.local_shipping_outlined, tone: _Tone.orange, onTap: () => actions.enRoute(job))));
       }

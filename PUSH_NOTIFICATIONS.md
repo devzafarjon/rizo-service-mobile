@@ -1,38 +1,41 @@
-# Push notifications — plan (not built yet)
+# Push notifications
 
-Status: **not implemented.** The apps refresh by themselves while open (every 30–60 seconds) and customers still receive SMS.
-Push needs a Firebase project and credentials that only you can create, so this file describes what to do and what the code
-change will be, so it can be built in one go once the credentials exist.
+Status: **built and working on Android** (tested on an Android 17 emulator with real Firebase messages: staff and customer apps, language,
+tap opens the request). **iPhone is not switched on yet**: it needs an Apple Developer account (see the end).
 
-## What you do (about 30 minutes)
+## How it works
 
-1. Create a Firebase project at console.firebase.google.com (free, "Spark" plan is enough).
-2. Add the apps: Android `uz.rizo.rizo_staff` and `uz.rizo.rizo_customer`, iOS with the same bundle ids (change the ids first if you
-   decided on different ones — see README).
-3. Download `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) for each app and put them in
-   `apps/<app>/android/app/` and `apps/<app>/ios/Runner/`.
-4. iOS only: in the Apple Developer account create an **APNs Auth Key (.p8)** and upload it in Firebase → Project settings →
-   Cloud Messaging.
-5. Firebase → Project settings → Service accounts → **Generate new private key** (JSON). Put its content in the API's environment
-   as `FIREBASE_SERVICE_ACCOUNT` (Render → Environment). Never commit this file.
+* Every notification the user sees in the bell is also sent as a push to every phone they are signed in on
+  (`server/src/lib/push.ts`, called from `notifyStaff.ts` and `notifyCustomer.ts`). Staff receive **all** their notifications; customers
+  receive their status messages. A technician also gets a push when a job is assigned to them (push only, no bell entry).
+* The text is written in the language of the phone (uz / ru / en), from the same wording as the website (`server/src/lib/pushTexts.generated.ts`,
+  regenerate with `node server/scripts/sync-push-texts.mjs` after changing `client/src/i18n/locales/*.json`).
+* Tapping a notification opens the request in the app (admin and front desk: request detail; technician: the job; customer: the request).
+* After sign-in (or when the app starts signed in) the app asks for notification permission, gets a Firebase token and registers it
+  (`POST /api/staff/devices`, `/api/customer/devices`). On sign-out it removes the token (`POST …/devices/remove`). Tokens Firebase reports as
+  gone are deleted by the server. Table: `device_tokens`.
+* Without Firebase configured the server only logs `[push:console] …` and the apps still work.
 
-## What gets built
+## Setup (done for Android)
 
-**Server (`rizo-service-full/server`)**
-* New table `device_tokens` (id, user scope `staff|customer`, user id, token, platform, locale, last_seen_at); migration.
-* `POST /api/staff/devices` and `POST /api/customer/devices` to register / refresh a token, `DELETE` on sign-out.
-* `lib/push.ts` using `firebase-admin` to send; wired next to the existing SMS/Telegram sending in `notifyCustomer.ts` and
-  `notifyStaff.ts` so every existing notification code (estimate sent, technician on the way, part arrived, new job assigned,
-  customer message, overdue …) also becomes a push, text taken from the same translations (the user's language).
-* Invalid tokens are removed when Firebase reports them.
+1. Firebase project `rizo-service`, Android apps `uz.rizo.rizo_staff` and `uz.rizo.rizo_customer`.
+2. `google-services.json` copied to `apps/<app>/android/app/` (kept out of git; it contains both apps, so the same file works for both).
+   Keep a copy at `~/Desktop/RIZO/firebase/`.
+3. Server: put the service-account JSON in the environment as **`FIREBASE_SERVICE_ACCOUNT`** (Render → Environment → the JSON text).
+   For local work use `FIREBASE_SERVICE_ACCOUNT_FILE=/path/to/service-account.json`. **Never commit this file.**
+4. Deploy: the migration `20261008100000_device_tokens` runs automatically (`start:prod`).
 
-**Apps**
-* `firebase_core` + `firebase_messaging` in `rizo_core`; ask for permission after sign-in, register the token, refresh it, remove it
-  on sign-out.
-* Tapping a notification opens the request (`serviceRequestId` is sent in the payload).
-* Android 13+ notification permission; iOS "Push Notifications" and "Background Modes → Remote notifications" capabilities.
+Try it: sign in on a phone, then `npm run push-test -w server -- <phone> [staff|customer]`.
+
+## iPhone (to do, needs an Apple Developer account, 99 USD / year)
+
+1. Apple Developer → Keys → create an **APNs Auth Key (.p8)** (note the Key ID and Team ID).
+2. Firebase → Project settings → Cloud Messaging → Apple app configuration → upload the `.p8` with Key ID and Team ID.
+3. Firebase → add iOS apps with the bundle ids **`uz.rizo.rizoStaff`** and **`uz.rizo.rizoCustomer`** (note the capital letters), download
+   `GoogleService-Info.plist` for each and add it to `apps/<app>/ios/Runner/` (Xcode → Runner → add files; kept out of git).
+4. Xcode → Runner → Signing & Capabilities → add **Push Notifications** and **Background Modes → Remote notifications**.
+5. Build on a real device (push does not work on the simulator).
 
 ## Decisions
-* **Staff receive push for ALL notifications** the bell shows (assignments, customer replies, overdue, part arrivals, …),
-  not only a subset. Decided by the owner.
-* Quiet hours were not requested (the "tungi rejim" request means dark mode, which is built into the apps separately).
+* Staff receive push for **all** notifications. Quiet hours were not requested ("tungi rejim" means dark mode).
+* If the application ids change, register the new ids in Firebase and replace `google-services.json`.

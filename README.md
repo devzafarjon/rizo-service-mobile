@@ -32,7 +32,7 @@ Flutter 3.35 or newer (the project was built with 3.47). From the repo folder:
 
 ```bash
 cd apps/rizo_staff          # or apps/rizo_customer
-flutter pub get
+flutter pub get                                                     # also after pulling new changes
 flutter run -d chrome --dart-define=API_URL=http://localhost:4000   # quick look on the web
 flutter run                                                         # a connected phone / emulator
 ```
@@ -85,9 +85,8 @@ cd ../rizo_customer && flutter analyze && flutter test
 * **Application IDs**: `uz.rizo.rizo_staff` / `uz.rizo.rizo_customer`. Change them once, before the first store upload
   (Android: `android/app/build.gradle.kts`; iOS: Xcode → Runner → Signing).
 * **Signing**: an Android upload keystore and Apple signing certificates.
-* **Push notifications** are not included (decided: staff get *all* notifications; see `PUSH_NOTIFICATIONS.md`). They need a Firebase project (`google-services.json` /
-  `GoogleService-Info.plist`) and a server part that sends them. Today the apps refresh every 30–60 seconds while open,
-  and customers still get SMS.
+* **Push notifications** work on Android (Firebase). Put `google-services.json` in `apps/<app>/android/app/` (not in git) and set
+  `FIREBASE_SERVICE_ACCOUNT` on the API host. iPhone still needs an Apple Developer account. Everything is in `PUSH_NOTIFICATIONS.md`.
 * **iOS builds** need a Mac with Xcode (accept its license once: `sudo xcodebuild -license accept`).
 * **Android builds** need Android Studio. If Flutter cannot find Java, point it at the one bundled with Android Studio:
   `flutter config --jdk-dir "/Applications/Android Studio.app/Contents/jbr/Contents/Home"`. A debug build for the emulator:

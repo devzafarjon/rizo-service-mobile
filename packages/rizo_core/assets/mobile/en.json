@@ -40,6 +40,8 @@
       "all": "All"
     },
     "cancelTitle": "Cancel request",
-    "newCustomer": "New customer"
+    "newCustomer": "New customer",
+    "webOnly": "The app is not made for this role. Please use the website.",
+    "openWebsite": "Open the website"
   }
 }

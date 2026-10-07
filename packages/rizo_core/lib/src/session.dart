@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -8,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'i18n.dart';
 import 'models.dart';
+import 'push.dart';
 
 /// Keeps the signed-in user and token. The token lives in the platform's secure storage
 /// (Keychain / Keystore); the last known user is cached so the app still opens without a connection.
@@ -38,6 +40,7 @@ abstract class AuthSession<U> extends ChangeNotifier {
   String get mePath;
   String get loginPath;
   String get localePath;
+  String get devicesPath => '/api/$scope/devices';
 
   bool get isSignedIn => token != null && user != null;
 
@@ -75,6 +78,7 @@ abstract class AuthSession<U> extends ChangeNotifier {
     }
     restoring = false;
     notifyListeners();
+    if (isSignedIn) unawaited(PushService.I.register(api, devicesPath));
   }
 
   Future<void> _cacheUser(U value) async {
@@ -109,12 +113,16 @@ abstract class AuthSession<U> extends ChangeNotifier {
     await _cacheUser(next);
     await Translator.I.setLocale(userLocale(next));
     notifyListeners();
+    unawaited(PushService.I.register(api, devicesPath));
     return next;
   }
 
-  Future<U> login(String phone, String password) async => _finishLogin(await api.post(loginPath, body: {'phone': phone, 'password': password}));
+  /// [code] is the six-digit code of two-step sign-in (staff only); the server asks for it with `totpRequired`.
+  Future<U> login(String phone, String password, {String? code}) async =>
+      _finishLogin(await api.post(loginPath, body: {'phone': phone, 'password': password, if (code != null && code.isNotEmpty) 'code': code}));
 
   Future<void> logout() async {
+    await PushService.I.unregister(api, devicesPath);
     await _clear();
     await onLogout();
     notifyListeners();
@@ -180,7 +188,16 @@ class CustomerSession extends AuthSession<CustomerUser> {
   @override
   CustomerUser parseUser(Object? json) => CustomerUser.fromJson(json);
   @override
-  Json userToJson(CustomerUser u) => {'id': u.id, 'name': u.name, 'phone': u.phone, 'address': u.address, 'locale': u.locale};
+  Json userToJson(CustomerUser u) => {
+        'id': u.id,
+        'name': u.name,
+        'phone': u.phone,
+        'address': u.address,
+        'locale': u.locale,
+        'preferredChannel': u.preferredChannel,
+        'telegramLinked': u.telegramLinked,
+        'deletionRequested': u.deletionRequested,
+      };
   @override
   String userLocale(CustomerUser u) => u.locale;
   @override
@@ -201,4 +218,22 @@ class CustomerSession extends AuthSession<CustomerUser> {
   }
 
   Future<void> forgotPassword(String phone) => api.post('/api/customer/auth/forgot', body: {'phone': phone});
+
+  /// Where status messages go: sms, telegram or both.
+  Future<void> setChannel(String channel) async {
+    final data = await api.patch('/api/customer/auth/preferences', body: {'preferredChannel': channel});
+    user = parseUser(asMap(data)['user']);
+    await _cacheUser(user!);
+    notifyListeners();
+  }
+
+  /// Asks the service to erase the personal data (or withdraws the request).
+  Future<void> setDeletionRequested(bool requested) async {
+    if (requested) {
+      await api.post('/api/customer/auth/me/delete-request');
+    } else {
+      await api.delete('/api/customer/auth/me/delete-request');
+    }
+    await refreshUser();
+  }
 }

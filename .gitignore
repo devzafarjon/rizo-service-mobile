@@ -17,3 +17,8 @@ build/
 **/ios/Flutter/ephemeral/
 **/ios/Flutter/flutter_export_environment.sh
 **/macos/Flutter/ephemeral/
+
+# Firebase files (push notifications) stay out of git; see PUSH_NOTIFICATIONS.md
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+*service-account*.json

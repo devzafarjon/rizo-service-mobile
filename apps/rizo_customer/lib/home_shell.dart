@@ -6,6 +6,8 @@ import 'package:rizo_core/rizo_core.dart';
 import 'centers_screen.dart';
 import 'new_request_screen.dart';
 import 'notifications_screen.dart';
+import 'help_screen.dart';
+import 'products_screen.dart';
 import 'register_product_screen.dart';
 import 'request_detail_screen.dart';
 import 'requests_screen.dart';
@@ -26,12 +28,30 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
+    PushService.I.openRequest.addListener(_openFromPush);
+    PushService.I.arrived.addListener(_onPushArrived);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openFromPush());
     _unread();
     _poll = Timer.periodic(const Duration(seconds: 60), (_) => _unread());
   }
 
+  // A tapped push notification opens the request it is about.
+  void _openFromPush() {
+    final id = PushService.I.openRequest.value;
+    if (id == null || !mounted) return;
+    PushService.I.openRequest.value = null;
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(requestId: id)));
+  }
+
+  void _onPushArrived() {
+    _unread();
+    _requests.currentState?.reload();
+  }
+
   @override
   void dispose() {
+    PushService.I.openRequest.removeListener(_openFromPush);
+    PushService.I.arrived.removeListener(_onPushArrived);
     _poll?.cancel();
     super.dispose();
   }
@@ -98,7 +118,9 @@ class _MoreScreen extends StatelessWidget {
           ]),
         ),
         const SizedBox(height: 12),
+        tile(Icons.inventory_2_outlined, context.tr('nav.myProducts'), const ProductsScreen()),
         tile(Icons.add_box_outlined, context.tr('nav.registerProduct'), const RegisterProductScreen()),
+        tile(Icons.support_agent, context.tr('nav.help'), const HelpScreen()),
         tile(Icons.place_outlined, context.tr('nav.centers'), const CentersScreen()),
         tile(Icons.settings_outlined, context.tr('mobile.settings'), const SettingsScreen()),
       ]),

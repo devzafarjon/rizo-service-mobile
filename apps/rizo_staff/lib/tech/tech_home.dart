@@ -8,6 +8,7 @@ import 'job_card.dart';
 import 'job_screen.dart';
 import 'scan_screen.dart';
 import 'schedule_screen.dart';
+import 'stock_screen.dart';
 import 'sync_bar.dart';
 
 /// The technician's board (tablet: four columns side by side; phone: one column per tab).
@@ -27,6 +28,9 @@ class _TechHomeState extends State<TechHome> with WidgetsBindingObserver {
     repo = TechRepository(context.read<StaffSession>());
     repo.addListener(_onRepoChange);
     WidgetsBinding.instance.addObserver(this);
+    PushService.I.openRequest.addListener(_openFromPush);
+    PushService.I.arrived.addListener(_refresh);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openFromPush());
     _refresh();
     repo.startAutoSync();
   }
@@ -70,8 +74,18 @@ class _TechHomeState extends State<TechHome> with WidgetsBindingObserver {
     });
   }
 
+  // A tapped push notification (a new job, a customer reply…) opens that job.
+  void _openFromPush() {
+    final id = PushService.I.openRequest.value;
+    if (id == null || !mounted) return;
+    PushService.I.openRequest.value = null;
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ChangeNotifierProvider<TechRepository>.value(value: repo, child: JobScreen(jobId: id))));
+  }
+
   @override
   void dispose() {
+    PushService.I.openRequest.removeListener(_openFromPush);
+    PushService.I.arrived.removeListener(_refresh);
     WidgetsBinding.instance.removeObserver(this);
     repo.removeListener(_onRepoChange);
     repo.dispose();
@@ -131,12 +145,14 @@ class _Board extends StatelessWidget {
           'scan' => _scan(context),
           'schedule' => const ScheduleScreen(),
           'earnings' => const EarningsScreen(),
+          'stock' => const StockScreen(),
           _ => SettingsScreen(repository: repo),
         };
         Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => route));
       },
       itemBuilder: (ctx) => [
         PopupMenuItem(value: 'schedule', child: ListTile(leading: const Icon(Icons.calendar_month_outlined), title: Text(ctx.tr('nav.mySchedule')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'stock', child: ListTile(leading: const Icon(Icons.inventory_2_outlined), title: Text(ctx.tr('nav.myStock')), contentPadding: EdgeInsets.zero)),
         PopupMenuItem(value: 'earnings', child: ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: Text(ctx.tr('nav.myEarnings')), contentPadding: EdgeInsets.zero)),
         PopupMenuItem(value: 'settings', child: ListTile(leading: const Icon(Icons.settings_outlined), title: Text(ctx.tr('mobile.settings')), contentPadding: EdgeInsets.zero)),
       ],

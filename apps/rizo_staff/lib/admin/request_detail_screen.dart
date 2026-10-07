@@ -221,8 +221,13 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         InfoRow(context.tr('common.created'), formatDateTime(job.createdAt)),
         if (job.legalDueAt != null) InfoRow(context.tr('detail.legalDue'), formatDateTime(job.legalDueAt)),
         if (job.serviceCenterName != null) InfoRow(context.tr('centers.center'), job.serviceCenterName),
-        if (job.scheduledAt != null) InfoRow(context.tr('detail.scheduled'), formatStamp(job.scheduledAt)),
-        if (job.enRouteAt != null) InfoRow(context.tr('detail.enRoute'), formatStamp(job.enRouteAt)),
+        if (job.scheduledAt != null)
+          InfoRow(context.tr('detail.scheduled'), null, valueWidget: Wrap(spacing: 8, runSpacing: 4, crossAxisAlignment: WrapCrossAlignment.center, children: [
+            Text('${formatStamp(job.scheduledAt)}${job.visitSlot != null ? ' · ${job.visitSlot!.replaceFirst('-', ' – ')}' : ''}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            Pill(job.visitConfirmed ? context.tr('visit.confirmed') : context.tr('visit.notConfirmed'), color: job.visitConfirmed ? Brand.green : Brand.amberText, background: job.visitConfirmed ? Brand.greenTint : Brand.amberTint),
+          ])),
+        if (job.enRouteAt != null) InfoRow(context.tr('detail.enRoute'), '${formatStamp(job.enRouteAt)}${job.etaMinutes != null ? ' · ${context.tr('tech.etaMinutes', params: {'minutes': job.etaMinutes})}' : ''}'),
+        if (job.escalationLevel > 0) InfoRow(context.tr('visit.title'), context.tr('visit.escalated', params: {'level': job.escalationLevel})),
         if (job.customerLocation != null)
           InfoRow(context.tr('detail.address'), null, valueWidget: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(job.customerLocation!.address, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)), TextButton.icon(style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: const Size(0, 32)), onPressed: () => openUri(context, job.customerLocation!.mapsUri), icon: const Icon(Icons.navigation_outlined, size: 16), label: Text(context.tr('maps.directions')))])),
       ]),

@@ -5,7 +5,10 @@ import 'package:rizo_core/rizo_core.dart';
 
 /// Book a repair or an installation in three steps: what, describe, where.
 class NewRequestScreen extends StatefulWidget {
-  const NewRequestScreen({super.key});
+  const NewRequestScreen({super.key, this.initialSaleId});
+
+  /// Preselects a purchase (when coming from "My products").
+  final String? initialSaleId;
   @override
   State<NewRequestScreen> createState() => _NewRequestScreenState();
 }
@@ -22,7 +25,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   String defectType = 'failed_during_use';
   String locationType = 'in_shop';
   String? centerId;
-  DateTime? preferred;
+  VisitChoice? visit;
   final photos = <Uint8List>[];
   final _issue = TextEditingController();
   final _serial = TextEditingController();
@@ -48,6 +51,10 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         products = asList(asMap(results[1])['products']).map(ProductRef.fromJson).toList();
         centers = asList(asMap(results[2])['centers']).map(ServiceCenter.new).toList();
         otherProduct = sales.isEmpty;
+        if (widget.initialSaleId != null && sales.any((s) => s.id == widget.initialSaleId)) {
+          saleId = widget.initialSaleId;
+          otherProduct = false;
+        }
         ready = true;
       });
     } catch (e) {
@@ -73,9 +80,11 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         if (_onSite) 'customerLocation': {'address': _address.text.trim()},
         if (_serial.text.trim().isNotEmpty) 'serialNumber': _serial.text.trim(),
         if (centerId != null && !_onSite) 'serviceCenterId': centerId,
-        if (preferred != null) 'scheduledAt': preferred!.toUtc().toIso8601String(),
+        if (visit != null) 'visitDate': visit!.date,
+        if (visit != null) 'visitSlot': visit!.slot,
       });
       final id = asMap(asMap(r)['request'])['id'].toString();
+      final visitError = asMap(r)['visitError'];
       if (photos.isNotEmpty) {
         try {
           await _api.upload('/api/customer/requests/$id/photos', [for (var i = 0; i < photos.length; i++) UploadFile('photo-$i.jpg', photos[i])]);
@@ -84,7 +93,8 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         }
       }
       if (!mounted) return;
-      showSnack(context, context.tr('portal.created'));
+      // The request exists even when the chosen window was taken meanwhile; say so and let the customer pick again.
+      showSnack(context, visitError != null ? context.tr('visit.notBooked') : context.tr('portal.created'), error: visitError != null);
       Navigator.of(context).pop(id);
     } catch (e) {
       if (mounted) showSnack(context, context.errorText(e), error: true);
@@ -233,14 +243,24 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         Labeled(context.tr('centers.center'), hint: context.tr('centers.pickHint'), child: DropdownButtonFormField<String?>(initialValue: centerId, isExpanded: true, items: [DropdownMenuItem<String?>(value: null, child: Text(context.tr('centers.auto'))), for (final c in centers) DropdownMenuItem<String?>(value: c.id, child: Text('${c.name} · ${c.address}', overflow: TextOverflow.ellipsis))], onChanged: (v) => setState(() => centerId = v))),
       Labeled(
         _onSite ? context.tr('portal.preferredTime') : context.tr('portal.preferredVisit'),
-        hint: context.tr('portal.preferredTimeHint'),
+        hint: context.tr('visit.optionalHint'),
         child: OutlinedButton.icon(
           onPressed: () async {
-            final picked = await pickDateTime(context, initial: preferred);
-            if (picked != null) setState(() => preferred = picked);
+            final picked = await pickVisitSlot(
+              context,
+              initialDate: visit?.date,
+              loadSlots: (date) async => asList(asMap(await _api.get('/api/customer/visit-slots', query: {
+                    'date': date,
+                    'locationType': _onSite ? 'on_site' : 'in_shop',
+                    if (!_onSite && centerId != null) 'serviceCenterId': centerId,
+                  }))['slots'])
+                  .map(VisitSlot.new)
+                  .toList(),
+            );
+            if (picked != null) setState(() => visit = picked);
           },
           icon: const Icon(Icons.event_outlined),
-          label: Text(preferred == null ? context.tr('common.dash') : formatStamp(preferred)),
+          label: Text(visit == null ? context.tr('common.dash') : '${visit!.date} · ${visit!.slot.replaceFirst('-', ' – ')}'),
         ),
       ),
       const SizedBox(height: 8),

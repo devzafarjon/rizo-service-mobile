@@ -71,6 +71,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _Kpi(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)} (${d.total('ratingCount').round()})', null),
                 _Kpi(context.tr('dashboard.legalOverdue'), formatNumber(d.total('legalOverdue')), null, bad: d.total('legalOverdue') > 0),
                 _Kpi(context.tr('dashboard.debt'), formatMoney(d.total('debt')), null, bad: d.total('debt') > 0),
+                _Kpi(context.tr('dashboard.ftf'), d.service['firstTimeFixRate'] is num ? '${d.service['firstTimeFixRate']}%' : context.tr('common.dash'), null, bad: d.service['firstTimeFixRate'] is num && (d.service['firstTimeFixRate'] as num) < 70),
+                _Kpi(context.tr('dashboard.callbacks'), d.service['callbackRate'] is num ? '${d.service['callbackRate']}%' : context.tr('common.dash'), null),
+                _Kpi(context.tr('dashboard.callbackCost'), formatMoney(asDouble(d.service['callbackCost'])), null, bad: asDouble(d.service['callbackCost']) > 0),
+                _Kpi(context.tr('dashboard.partsWait'), formatDurationHours(d.service['avgPartsWaitHours'] is num ? (d.service['avgPartsWaitHours'] as num).toDouble() : null), null),
               ];
               return GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.55, children: cards);
             }),

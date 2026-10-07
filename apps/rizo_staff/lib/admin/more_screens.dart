@@ -52,14 +52,15 @@ class _AlertsScreenState extends State<AlertsScreen> {
     final locale = context.watch<Translator>().locale;
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('alerts.title')), actions: [
-        TextButton(
+        IconButton(
+          tooltip: context.tr('mobile.markAllRead'),
+          icon: const Icon(Icons.done_all),
           onPressed: alerts.any((a) => !a.isRead)
               ? () async {
                   await _api.patch('/api/staff/alerts/read-all');
                   _load();
                 }
               : null,
-          child: Text(context.tr('mobile.markAllRead')),
         ),
       ]),
       body: loading

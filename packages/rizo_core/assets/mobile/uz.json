@@ -40,6 +40,8 @@
       "all": "Hammasi"
     },
     "cancelTitle": "So‘rovni bekor qilish",
-    "newCustomer": "Yangi mijoz"
+    "newCustomer": "Yangi mijoz",
+    "webOnly": "Bu rol uchun ilova mo‘ljallanmagan. Iltimos, saytdan foydalaning.",
+    "openWebsite": "Saytni ochish"
   }
 }

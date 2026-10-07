@@ -46,7 +46,7 @@ class StaffUser {
   final String id;
   final String name;
   final String phone;
-  final String role; // admin | technician | receptionist
+  final String role; // admin | technician | receptionist | accountant | warehouse
   final String? technicianType; // mobile | service_center
   final bool isAvailable;
   final String locale;
@@ -54,19 +54,36 @@ class StaffUser {
   bool get isTechnician => role == 'technician';
   bool get isAdmin => role == 'admin';
   bool get isReceptionist => role == 'receptionist';
+
+  /// Accountants and warehouse managers work on the website; the app is for technicians, the front desk and admins.
+  bool get usesApp => isTechnician || isAdmin || isReceptionist;
 }
 
 class CustomerUser {
-  CustomerUser({required this.id, required this.name, required this.phone, this.address, this.locale = 'uz'});
+  CustomerUser({required this.id, required this.name, required this.phone, this.address, this.locale = 'uz', this.preferredChannel = 'both', this.telegramLinked = false, this.deletionRequested = false});
   factory CustomerUser.fromJson(Object? json) {
     final m = _map(json);
-    return CustomerUser(id: _str(m['id']), name: _str(m['name']), phone: _str(m['phone']), address: _s(m['address']), locale: _str(m['locale'], 'uz'));
+    return CustomerUser(
+      id: _str(m['id']),
+      name: _str(m['name']),
+      phone: _str(m['phone']),
+      address: _s(m['address']),
+      locale: _str(m['locale'], 'uz'),
+      preferredChannel: _str(m['preferredChannel'], 'both'),
+      telegramLinked: _bool(m['telegramLinked']),
+      deletionRequested: _bool(m['deletionRequested']),
+    );
   }
   final String id;
   final String name;
   final String phone;
   final String? address;
   final String locale;
+
+  /// sms | telegram | both
+  final String preferredChannel;
+  final bool telegramLinked;
+  final bool deletionRequested;
 }
 
 class PersonRef {
@@ -165,6 +182,10 @@ class Job {
         payment = MoneySummary.fromJson(raw['payment']),
         scheduledAt = _dt(raw['scheduledAt']),
         enRouteAt = _dt(raw['enRouteAt']),
+        etaMinutes = raw['etaMinutes'] is num ? (raw['etaMinutes'] as num).toInt() : null,
+        visitSlot = _s(raw['visitSlot']),
+        visitConfirmed = _dt(raw['visitConfirmedAt']) != null,
+        escalationLevel = _int(raw['escalationLevel']),
         arrivedAt = _dt(raw['arrivedAt']),
         createdAt = _dt(raw['createdAt']),
         completedAt = _dt(raw['completedAt']),
@@ -210,6 +231,10 @@ class Job {
   final MoneySummary payment;
   final DateTime? scheduledAt;
   final DateTime? enRouteAt;
+  final int? etaMinutes;
+  final String? visitSlot;
+  final bool visitConfirmed;
+  final int escalationLevel;
   final DateTime? arrivedAt;
   final DateTime? createdAt;
   final DateTime? completedAt;
@@ -347,12 +372,19 @@ class CatalogChoice {
         names = Named.fromJson(m),
         price = _dbl(m['price']),
         stockQuantity = m['stockQuantity'] is num ? (m['stockQuantity'] as num).toInt() : null,
+        carried = _int(m['carried']),
         lowStock = _bool(m['lowStock']);
   final String id;
   final Named names;
   final double price;
   final int? stockQuantity;
+
+  /// How many the technician carries (van stock); used before the warehouse stock.
+  final int carried;
   final bool lowStock;
+
+  /// What can be used on a job right now.
+  int get available => (stockQuantity ?? 0) + carried;
 }
 
 class DefectCode {
@@ -387,6 +419,7 @@ class JobWork {
         catalogServices = _list(_map(raw['catalog'])['services']).map(CatalogChoice.new).toList(),
         catalogParts = _list(_map(raw['catalog'])['parts']).map(CatalogChoice.new).toList(),
         replacementProducts = _list(_map(raw['catalog'])['replacementProducts']).map(ProductRef.fromJson).toList(),
+        checklist = JobChecklist(_map(raw['checklist'])),
         blockZeroStock = _bool(_map(raw['settings'])['blockZeroStock'], true);
 
   final Json raw;
@@ -409,6 +442,7 @@ class JobWork {
   final List<CatalogChoice> catalogServices;
   final List<CatalogChoice> catalogParts;
   final List<ProductRef> replacementProducts;
+  final JobChecklist checklist;
   final bool blockZeroStock;
 
   double costValue(String key) => _dbl(cost[key]);
@@ -485,6 +519,100 @@ class ServiceCenter {
   final bool isAuthorized;
 }
 
+/// A booking window of a day and how many visits are still free in it.
+class VisitSlot {
+  VisitSlot(Json m)
+      : slot = _str(m['slot']),
+        free = _bool(m['free']),
+        left = _int(m['left']);
+  final String slot;
+  final bool free;
+  final int left;
+}
+
+/// What the customer can do about the visit of a request.
+class VisitInfo {
+  VisitInfo(Json m)
+      : slot = _s(m['slot']),
+        confirmed = _bool(m['confirmed']),
+        canBook = _bool(m['canBook']),
+        canReschedule = _bool(m['canReschedule']),
+        canCancel = _bool(m['canCancel']);
+  final String? slot;
+  final bool confirmed;
+  final bool canBook;
+  final bool canReschedule;
+  final bool canCancel;
+}
+
+/// Paid warranty extension on offer ("+12 months").
+class WarrantyPlanInfo {
+  WarrantyPlanInfo(Json m)
+      : id = _str(m['id']),
+        names = Named.fromJson(m),
+        months = _int(m['months']),
+        price = _dbl(m['price']);
+  final String id;
+  final Named names;
+  final int months;
+  final double price;
+}
+
+/// A self-help guide.
+class HelpArticleInfo {
+  HelpArticleInfo(Json m)
+      : id = _str(m['id']),
+        category = _s(m['productCategory']),
+        title = _map(m['title']),
+        body = _map(m['body']),
+        videoUrl = _s(m['videoUrl']);
+  final String id;
+  final String? category;
+  final Json title;
+  final Json body;
+  final String? videoUrl;
+
+  static String _pick(Json m, String locale) {
+    for (final k in [locale, 'uz', 'en', 'ru']) {
+      final v = _str(m[k]);
+      if (v.isNotEmpty) return v;
+    }
+    return '';
+  }
+
+  String titleFor(String locale) => _pick(title, locale);
+  String bodyFor(String locale) => _pick(body, locale);
+}
+
+/// A step the technician ticks off.
+class ChecklistItem {
+  ChecklistItem(Json m)
+      : id = _str(m['id']),
+        texts = {'uz': _str(m['uz']), 'ru': _str(m['ru']), 'en': _str(m['en'])},
+        required = _bool(m['required']);
+  final String id;
+  final Map<String, String> texts;
+  final bool required;
+  String text(String locale) => (texts[locale] ?? '').isNotEmpty ? texts[locale]! : (texts['uz'] ?? texts['en'] ?? '');
+}
+
+/// The diagnosis and completion checklists of a job with what is ticked.
+class JobChecklist {
+  JobChecklist(Json m)
+      : diagnosis = _list(_map(m['diagnosis'])['items']).map(ChecklistItem.new).toList(),
+        diagnosisChecked = _strings(_map(m['diagnosis'])['checked']),
+        completion = _list(_map(m['completion'])['items']).map(ChecklistItem.new).toList(),
+        completionChecked = _strings(_map(m['completion'])['checked']);
+  final List<ChecklistItem> diagnosis;
+  final Set<String> diagnosisChecked;
+  final List<ChecklistItem> completion;
+  final Set<String> completionChecked;
+
+  bool get isEmpty => diagnosis.isEmpty && completion.isEmpty;
+
+  static Set<String> _strings(Object? v) => v is List ? v.map((e) => e.toString()).toSet() : <String>{};
+}
+
 /// A request as the customer sees it.
 class PortalRequest {
   PortalRequest(this.raw)
@@ -506,6 +634,8 @@ class PortalRequest {
         serialNumber = _s(raw['serialNumber']),
         scheduledAt = _dt(raw['scheduledAt']),
         enRouteAt = _dt(raw['enRouteAt']),
+        visit = VisitInfo(_map(raw['visit'])),
+        etaMinutes = raw['eta'] is Map ? _int((raw['eta'] as Map)['minutes']) : null,
         dueBy = _dt(raw['dueBy']),
         repairWarrantyUntil = _s(raw['repairWarrantyUntil']),
         rejectionReason = _s(raw['rejectionReason']),
@@ -537,6 +667,8 @@ class PortalRequest {
   final String? serialNumber;
   final DateTime? scheduledAt;
   final DateTime? enRouteAt;
+  final VisitInfo visit;
+  final int? etaMinutes;
   final DateTime? dueBy;
   final String? repairWarrantyUntil;
   final String? rejectionReason;
@@ -559,7 +691,11 @@ class PortalSale {
         warrantyStatus = _str(m['warrantyStatus'], 'not_applicable'),
         serialNumber = _s(m['serialNumber']),
         isVerified = _bool(m['isVerified'], true),
+        warrantyDaysLeft = m['warrantyDaysLeft'] is num ? (m['warrantyDaysLeft'] as num).toInt() : null,
+        voided = _bool(m['voided']),
         product = ProductRef.fromJson(m['product']);
+  final int? warrantyDaysLeft;
+  final bool voided;
   final String id;
   final String invoiceNumber;
   final String saleDate;
@@ -630,11 +766,15 @@ class DashboardData {
   DashboardData(this.raw)
       : totals = _map(raw['totals']),
         previous = raw['previous'] is Map ? _map(raw['previous']) : null,
+        service = _map(raw['service']),
         byStatus = _list(raw['byStatus']),
         topProducts = _list(raw['topProducts']),
         warrantySplit = _map(raw['warrantySplit']);
   final Json raw;
   final Json totals;
+
+  /// First-time fix, callbacks, callback cost and waiting times (see ServiceKpis on the website).
+  final Json service;
   final Json? previous;
   final List<Json> byStatus;
   final List<Json> topProducts;

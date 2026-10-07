@@ -10,6 +10,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
+  final _code = TextEditingController();
+  bool _needCode = false;
   bool _obscure = true;
   String? _error;
 
@@ -22,10 +24,19 @@ class _LoginScreenState extends State<LoginScreen> {
     }
     setState(() => _error = null);
     try {
-      final user = await context.read<StaffSession>().login(phone, password);
+      final user = await context.read<StaffSession>().login(phone, password, code: _needCode ? _code.text.trim() : null);
       if (user.role == 'customer') return;
     } catch (error) {
-      if (mounted) setState(() => _error = context.errorText(error));
+      if (!mounted) return;
+      // Two-step sign-in: the server asks for the six-digit code from the authenticator app.
+      if (error is ApiException && error.code == 'totpRequired') {
+        setState(() {
+          _needCode = true;
+          _error = context.tr('security.codeNeeded');
+        });
+        return;
+      }
+      setState(() => _error = context.errorText(error));
     }
   }
 
@@ -58,6 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(suffixIcon: IconButton(icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined), onPressed: () => setState(() => _obscure = !_obscure))),
                   ),
                 ),
+                if (_needCode)
+                  Labeled(context.tr('security.code'), child: TextField(controller: _code, keyboardType: TextInputType.number, maxLength: 6, autofocus: true, autofillHints: const [AutofillHints.oneTimeCode], onSubmitted: (_) => _submit(), decoration: const InputDecoration(counterText: '', hintText: '123456'))),
                 if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
                 BusyButton(label: context.tr('common.signIn'), onPressed: _submit),
                 const SizedBox(height: 8),

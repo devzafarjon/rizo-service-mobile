@@ -10,6 +10,7 @@ Future<void> main() async {
   await AppConfig.load();
   await Translator.I.load();
   await ThemeController.I.load();
+  await PushService.I.init();
   final session = StaffSession();
   await session.restore();
   runApp(StaffApp(session: session));

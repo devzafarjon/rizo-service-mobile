@@ -41,7 +41,22 @@ class JobPatch {
   }
 
   static void arrived(Json p, DateTime now) => _job(p)['arrivedAt'] = now.toUtc().toIso8601String();
-  static void enRoute(Json p, DateTime now) => _job(p)['enRouteAt'] = now.toUtc().toIso8601String();
+  static void enRoute(Json p, DateTime now, {int? etaMinutes}) {
+    final job = _job(p);
+    job['enRouteAt'] ??= now.toUtc().toIso8601String();
+    if (etaMinutes != null) {
+      job['etaMinutes'] = etaMinutes;
+      job['etaSetAt'] = now.toUtc().toIso8601String();
+    }
+  }
+
+  /// Ticks the given steps (the full list of ticked ids) of the diagnosis or completion checklist.
+  static void checklist(Json p, String kind, List<String> checked) {
+    final list = (p['checklist'] ??= <String, dynamic>{}) as Json;
+    final group = (list[kind] ??= <String, dynamic>{'items': <dynamic>[]}) as Json;
+    final valid = asList(group['items']).map((i) => i['id'].toString()).toSet();
+    group['checked'] = checked.where(valid.contains).toSet().toList();
+  }
   static void diagnosis(Json p, String? defectCodeId) => _job(p)['defectCodeId'] = defectCodeId;
 
   static void addService(Json p, String opId, String serviceId) {
@@ -72,18 +87,41 @@ class JobPatch {
       return;
     }
     final price = asDouble(part['price']);
+    final fromCarried = _take(part, quantity);
     lines.add({
       'id': 'local-$opId',
       'sparePartId': partId,
       'quantity': quantity,
       'priceAtTime': price,
       'lineTotal': price * quantity,
+      'fromCarried': fromCarried,
       'name': part['name'],
       'nameUz': part['nameUz'],
       'nameRu': part['nameRu'],
       'nameEn': part['nameEn'],
     });
-    _stock(part, -quantity);
+  }
+
+  /// A part is taken from what the technician carries first, then from the warehouse. Returns how many came from the van.
+  static int _take(Json part, int quantity) {
+    if (part.isEmpty) return 0;
+    final carried = part['carried'] is num ? (part['carried'] as num).toInt() : 0;
+    final fromVan = carried < quantity ? carried : quantity;
+    if (fromVan > 0) part['carried'] = carried - fromVan;
+    _stock(part, -(quantity - fromVan));
+    return fromVan;
+  }
+
+  /// Units that came from the van go back to the van, the rest to the warehouse.
+  static void _give(Json part, Json line, int quantity) {
+    if (part.isEmpty) return;
+    final fromCarried = asInt(line['fromCarried']);
+    final back = fromCarried < quantity ? fromCarried : quantity;
+    if (back > 0) {
+      part['carried'] = asInt(part['carried']) + back;
+      line['fromCarried'] = fromCarried - back;
+    }
+    _stock(part, quantity - back);
   }
 
   static void setPartQuantity(Json p, String lineId, int quantity) {
@@ -95,12 +133,16 @@ class JobPatch {
     final part = _catalog(p, 'parts').firstWhere((s) => s['id'] == line['sparePartId'], orElse: () => <String, dynamic>{});
     if (quantity <= 0) {
       lines.removeAt(index);
-      _stock(part, old);
+      _give(part, line, old);
       return;
     }
     line['quantity'] = quantity;
     line['lineTotal'] = asDouble(line['priceAtTime']) * quantity;
-    _stock(part, old - quantity);
+    if (quantity < old) {
+      _give(part, line, old - quantity);
+    } else if (quantity > old) {
+      line['fromCarried'] = asInt(line['fromCarried']) + _take(part, quantity - old);
+    }
   }
 
   static void _stock(Json part, int delta) {
@@ -220,6 +262,13 @@ class JobPatch {
     if (!replacing && requireService && services.isEmpty) gaps.add('service');
     if (asList(p['photos']).isEmpty) gaps.add('photo');
     if (replacing && p['replacement'] == null) gaps.add('replacement');
+    // Required checklist steps block completing a repair that is not replaced (the server applies the same rule).
+    final job = asMap(p['job']);
+    if (job['type'] == 'repair' && !replacing) {
+      final completion = asMap(asMap(p['checklist'])['completion']);
+      final done = (completion['checked'] is List ? (completion['checked'] as List).map((e) => e.toString()).toSet() : <String>{});
+      if (asList(completion['items']).any((i) => i['required'] == true && !done.contains(i['id'].toString()))) gaps.add('checklist');
+    }
     // Rules only the server can judge (for example an approved estimate for a paid repair) stay as they were.
     if (previous.contains('estimate')) gaps.add('estimate');
     p['missing'] = gaps;

@@ -225,7 +225,9 @@ class TechRepository extends ChangeNotifier {
       case 'arrived':
         JobPatch.arrived(payload, now);
       case 'enRoute':
-        JobPatch.enRoute(payload, now);
+        JobPatch.enRoute(payload, now, etaMinutes: args['etaMinutes'] is num ? (args['etaMinutes'] as num).toInt() : null);
+      case 'checklist':
+        JobPatch.checklist(payload, args['kind'].toString(), (args['checked'] as List).map((e) => e.toString()).toList());
       case 'diagnosis':
         JobPatch.diagnosis(payload, args['defectCodeId']?.toString());
       case 'serviceAdd':
@@ -346,7 +348,9 @@ class TechRepository extends ChangeNotifier {
       case 'arrived':
         return _api.post('$base/arrived');
       case 'enRoute':
-        return _api.post('$base/en-route');
+        return _api.post('$base/en-route', body: {if (a['etaMinutes'] != null) 'etaMinutes': a['etaMinutes']});
+      case 'checklist':
+        return _api.put('$base/checklist', body: {'kind': a['kind'], 'checked': a['checked']});
       case 'diagnosis':
         return _api.put('$base/diagnosis', body: {'defectCodeId': a['defectCodeId']});
       case 'serviceAdd':

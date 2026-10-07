@@ -6,6 +6,7 @@ import 'package:rizo_core/rizo_core.dart';
 
 import 'estimate_card.dart';
 import 'feedback_form.dart';
+import 'visit_card.dart';
 
 /// One request as the customer sees it: status, estimate to approve, messages, payment, pickup and rating.
 class RequestDetailScreen extends StatefulWidget {
@@ -94,6 +95,12 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           ),
         ),
         if (r.enRouteAt != null && !isTerminalStatus(r.status)) _banner(Icons.local_shipping_outlined, context.tr('portal.technicianOnTheWay', params: {'name': r.technicianName ?? ''}), Brand.orangeTint, Brand.orangeText),
+        VisitCard(request: r, api: _api, onChanged: (response, {String? success}) async {
+          _apply(response);
+          if (mounted && success != null) showSnack(context, success);
+          await _load(silent: true);
+        }),
+        PayCard(request: r, api: _api),
         if (r.status == 'rejected' && r.rejectionReason != null) _banner(Icons.block, context.tr('portal.rejectedBecause', params: {'reason': r.rejectionReason}), Brand.redTint, Brand.red),
         if (r.status == 'awaiting_parts') _banner(Icons.inventory_2_outlined, context.tr('portal.waitingParts'), Brand.amberTint, Brand.amberText),
         if (r.estimate != null) ...[
@@ -109,7 +116,6 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         Section(
           child: Column(children: [
             InfoRow(context.tr('common.opened'), formatDateTime(r.createdAt)),
-            if (r.scheduledAt != null) InfoRow(context.tr('portal.visitTime'), formatStamp(r.scheduledAt)),
             if (r.dueBy != null) InfoRow(context.tr('portal.dueBy'), formatDate(r.dueBy!.toIso8601String())),
             InfoRow(context.tr('common.completed'), formatDateTime(r.completedAt)),
             InfoRow(context.tr('common.technician'), r.technicianName ?? context.tr('portal.waitingAssignment')),

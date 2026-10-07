@@ -62,7 +62,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     context.watch<Translator>();
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('nav.notifications')), actions: [
-        TextButton(
+        IconButton(
+          tooltip: context.tr('mobile.markAllRead'),
+          icon: const Icon(Icons.done_all),
           onPressed: items.any((n) => n['isRead'] != true)
               ? () async {
                   await _api.patch('/api/customer/notifications/read-all');
@@ -70,7 +72,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   widget.onChanged();
                 }
               : null,
-          child: Text(context.tr('mobile.markAllRead')),
         ),
       ]),
       body: loading

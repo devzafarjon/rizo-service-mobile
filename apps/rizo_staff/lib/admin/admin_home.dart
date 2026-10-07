@@ -27,14 +27,31 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   void initState() {
     super.initState();
+    PushService.I.openRequest.addListener(_openFromPush);
+    PushService.I.arrived.addListener(_onPushArrived);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openFromPush());
     if (_user.isAdmin) {
       _unread();
       _poll = Timer.periodic(const Duration(seconds: 60), (_) => _unread());
     }
   }
 
+  // A tapped push notification opens the request it is about.
+  void _openFromPush() {
+    final id = PushService.I.openRequest.value;
+    if (id == null || !mounted) return;
+    PushService.I.openRequest.value = null;
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(requestId: id)));
+  }
+
+  void _onPushArrived() {
+    if (_user.isAdmin) _unread();
+  }
+
   @override
   void dispose() {
+    PushService.I.openRequest.removeListener(_openFromPush);
+    PushService.I.arrived.removeListener(_onPushArrived);
     _poll?.cancel();
     super.dispose();
   }

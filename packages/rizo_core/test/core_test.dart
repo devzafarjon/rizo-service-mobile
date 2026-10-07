@@ -49,6 +49,7 @@ Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 80));
 
 void main() {
   _themeTests();
+  _growthTests();
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Translator', () {
@@ -318,5 +319,93 @@ void _themeTests() {
       expect(dark.scaffoldBackgroundColor.computeLuminance(), lessThan(0.05));
       expect(buildTheme().brightness, Brightness.light);
     });
+  });
+}
+
+void _growthTests() {
+  group('offline job changes', () {
+    Json job() => {
+          'job': {'id': 'j1', 'type': 'repair', 'status': 'in_progress', 'locationType': 'on_site'},
+          'serviceLines': [
+            {'id': 's1', 'serviceCatalogItemId': 'svc', 'priceAtTime': 1000}
+          ],
+          'partLines': [],
+          'extraExpenses': [],
+          'photos': [
+            {'id': 'p1'}
+          ],
+          'cost': {'coveredByWarranty': false},
+          'catalog': {
+            'services': [
+              {'id': 'svc', 'price': 1000}
+            ],
+            'parts': [
+              {'id': 'part', 'name': 'Filter', 'price': 500, 'stockQuantity': 5, 'carried': 2}
+            ],
+          },
+          'checklist': {
+            'completion': {
+              'items': [
+                {'id': 'tested', 'uz': 'a', 'ru': 'a', 'en': 'a', 'required': true},
+                {'id': 'clean', 'uz': 'b', 'ru': 'b', 'en': 'b', 'required': false},
+              ],
+              'checked': <String>[],
+            },
+          },
+        };
+
+    test('a required checklist step blocks completing a repair until it is ticked', () {
+      final p = JobPatch.clone(job());
+      JobPatch.recompute(p);
+      expect(p['missing'], contains('checklist'));
+      expect(p['canComplete'], isFalse);
+      JobPatch.checklist(p, 'completion', ['tested', 'unknown']);
+      JobPatch.recompute(p);
+      expect(p['missing'], isNot(contains('checklist')));
+      expect(p['canComplete'], isTrue);
+      expect(JobChecklist(asMap(p['checklist'])).completionChecked, {'tested'});
+    });
+
+    test('parts come from the van first and go back to the van when the line shrinks', () {
+      final p = JobPatch.clone(job());
+      JobPatch.addPart(p, 'op1', 'part', 3);
+      // asList copies the maps, so read the live catalog entry.
+      final part = ((p['catalog'] as Map)['parts'] as List).first as Map;
+      expect(part['carried'], 0);
+      expect(part['stockQuantity'], 4); // 2 from the van, 1 from the warehouse
+      final line = asList(p['partLines']).first;
+      JobPatch.setPartQuantity(p, line['id'].toString(), 1);
+      expect(part['carried'], 2); // the two taken from the van are back with the technician
+      expect(part['stockQuantity'], 4);
+    });
+
+    test('"on my way" keeps the estimate', () {
+      final p = JobPatch.clone(job());
+      JobPatch.enRoute(p, DateTime.utc(2026, 10, 7, 9), etaMinutes: 25);
+      final j = Job(asMap(p['job']));
+      expect(j.etaMinutes, 25);
+      expect(j.enRouteAt, isNotNull);
+    });
+  });
+
+  test('portal request exposes the visit and arrival estimate', () {
+    final r = PortalRequest({
+      'id': 'r',
+      'visit': {'slot': '10:00-12:00', 'confirmed': true, 'canBook': true, 'canReschedule': false, 'canCancel': false},
+      'eta': {'minutes': 20, 'setAt': '2026-10-07T09:00:00Z'},
+    });
+    expect(r.visit.slot, '10:00-12:00');
+    expect(r.visit.confirmed, isTrue);
+    expect(r.visit.canReschedule, isFalse);
+    expect(r.etaMinutes, 20);
+  });
+
+  test('only technicians, the front desk and admins use the app', () {
+    StaffUser user(String role) => StaffUser.fromJson({'id': '1', 'name': 'x', 'phone': '1', 'role': role});
+    expect(user('technician').usesApp, isTrue);
+    expect(user('admin').usesApp, isTrue);
+    expect(user('receptionist').usesApp, isTrue);
+    expect(user('accountant').usesApp, isFalse);
+    expect(user('warehouse').usesApp, isFalse);
   });
 }

@@ -27,7 +27,32 @@ class TechActions {
   Future<JobWork?> start(Job job) => status(job, job.isRepair && job.status == 'new' ? 'diagnosing' : 'in_progress');
 
   Future<JobWork?> arrived(Job job) => run(() => repo.perform(job.id, 'arrived', {}));
-  Future<JobWork?> enRoute(Job job) => run(() => repo.perform(job.id, 'enRoute', {}));
+  /// Asks how long the trip takes (the customer sees the estimate), then records "on my way".
+  Future<JobWork?> enRoute(Job job) async {
+    final minutes = await showModalBottomSheet<int>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheet) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(sheet.tr('tech.etaTitle'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 6),
+            Text(sheet.tr('tech.etaHint', params: {'name': job.customer.name}), style: TextStyle(color: Brand.muted)),
+            const SizedBox(height: 14),
+            Wrap(spacing: 8, runSpacing: 8, children: [
+              for (final m in const [10, 20, 30, 45, 60, 90])
+                OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size(96, 48)), onPressed: () => Navigator.of(sheet).pop(m), child: Text(sheet.tr('tech.etaMinutes', params: {'minutes': m}))),
+            ]),
+            const SizedBox(height: 8),
+            Center(child: TextButton(onPressed: () => Navigator.of(sheet).pop(0), child: Text(sheet.tr('tech.etaSkip')))),
+          ]),
+        ),
+      ),
+    );
+    if (minutes == null || !context.mounted) return null;
+    return run(() => repo.perform(job.id, 'enRoute', {if (minutes > 0) 'etaMinutes': minutes}));
+  }
 
   /// Asks for a reason and how long, then pauses (the server requires both).
   Future<JobWork?> pause(Job job) async {
