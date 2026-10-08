@@ -18,7 +18,11 @@ class RequestsScreen extends StatefulWidget {
 
 class _RequestsScreenState extends State<RequestsScreen> {
   static const _filters = ['open', 'new', 'working', 'waiting', 'ready', 'done', 'overdue', 'unassigned', 'all'];
+  static const _pageSize = 100;
   List<Job> jobs = [];
+  int total = 0;
+  bool hasMore = false;
+  bool loadingMore = false;
   Object? error;
   bool loading = true;
   String filter = 'open';
@@ -43,13 +47,23 @@ class _RequestsScreenState extends State<RequestsScreen> {
     super.dispose();
   }
 
+  /// Loads the first page. A quiet refresh (the 40 s poll, coming back from a request) keeps the pages the user already
+  /// opened: only the first page is replaced, the rest stays below it.
   Future<void> _load({bool silent = false}) async {
     if (!silent) setState(() => loading = jobs.isEmpty);
     try {
-      final result = await _session.api.get('/api/staff/requests', query: {'q': _search.text.trim(), 'type': type});
+      final result = asMap(await _session.api.get('/api/staff/requests', query: {'q': _search.text.trim(), 'type': type, 'limit': _pageSize, 'offset': 0}));
+      final fresh = asList(result['requests']).map(Job.new).toList();
       if (mounted) {
         setState(() {
-          jobs = asList(asMap(result)['requests']).map(Job.new).toList();
+          if (silent && jobs.length > _pageSize) {
+            final ids = fresh.map((j) => j.id).toSet();
+            jobs = [...fresh, ...jobs.skip(_pageSize).where((j) => !ids.contains(j.id))];
+          } else {
+            jobs = fresh;
+          }
+          total = asInt(result['total']);
+          hasMore = jobs.length < total;
           error = null;
         });
       }
@@ -57,6 +71,27 @@ class _RequestsScreenState extends State<RequestsScreen> {
       if (mounted && !silent) setState(() => error = e);
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> _loadMore() async {
+    if (loadingMore) return;
+    setState(() => loadingMore = true);
+    try {
+      final result = asMap(await _session.api.get('/api/staff/requests', query: {'q': _search.text.trim(), 'type': type, 'limit': _pageSize, 'offset': jobs.length}));
+      final more = asList(result['requests']).map(Job.new).toList();
+      if (mounted) {
+        setState(() {
+          final ids = jobs.map((j) => j.id).toSet();
+          jobs = [...jobs, ...more.where((j) => !ids.contains(j.id))];
+          total = asInt(result['total']);
+          hasMore = jobs.length < total;
+        });
+      }
+    } catch (_) {
+      // The button stays; the user can try again.
+    } finally {
+      if (mounted) setState(() => loadingMore = false);
     }
   }
 
@@ -126,12 +161,21 @@ class _RequestsScreenState extends State<RequestsScreen> {
                           ? ListView(children: [SizedBox(height: 300, child: EmptyView(title: context.tr('requests.emptyTitle', def: context.tr('tech.noJobs'))))])
                           : ListView.separated(
                               padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
-                              itemCount: shown.length,
+                              itemCount: shown.length + (hasMore ? 1 : 0),
                               separatorBuilder: (_, _) => const SizedBox(height: 8),
-                              itemBuilder: (_, i) => _RequestTile(job: shown[i], onTap: () async {
-                                await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(requestId: shown[i].id)));
-                                _load(silent: true);
-                              }),
+                              itemBuilder: (_, i) {
+                                if (i == shown.length) {
+                                  return Column(children: [
+                                    Text(context.tr('common.shownOf', params: {'shown': jobs.length, 'total': total}), style: TextStyle(color: Brand.muted, fontSize: 12)),
+                                    const SizedBox(height: 6),
+                                    OutlinedButton(onPressed: loadingMore ? null : _loadMore, child: loadingMore ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(context.tr('common.loadMore'))),
+                                  ]);
+                                }
+                                return _RequestTile(job: shown[i], onTap: () async {
+                                  await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => RequestDetailScreen(requestId: shown[i].id)));
+                                  _load(silent: true);
+                                });
+                              },
                             ),
                     ),
         ),

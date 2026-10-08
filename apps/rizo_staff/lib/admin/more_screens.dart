@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
@@ -261,10 +263,14 @@ class CustomersScreen extends StatefulWidget {
 }
 
 class _CustomersScreenState extends State<CustomersScreen> {
-  List<Json> all = [];
+  static const _pageSize = 50;
+  List<Json> customers = [];
+  int total = 0;
   Object? error;
   bool loading = true;
+  bool loadingMore = false;
   final _q = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -272,36 +278,80 @@ class _CustomersScreenState extends State<CustomersScreen> {
     _load();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _q.dispose();
+    super.dispose();
+  }
+
+  /// The server searches (name or phone) and pages the list, so a long customer base never loads in one go.
+  Future<void> _load({bool more = false}) async {
+    if (more) {
+      if (loadingMore) return;
+      setState(() => loadingMore = true);
+    } else {
+      setState(() => loading = customers.isEmpty);
+    }
     try {
-      final r = await context.read<StaffSession>().api.get('/api/staff/customers');
-      if (mounted) setState(() => all = asList(asMap(r)['customers']));
+      final r = asMap(await context.read<StaffSession>().api.get('/api/staff/customers', query: {'q': _q.text.trim(), 'limit': _pageSize, 'offset': more ? customers.length : 0}));
+      final page = asList(r['customers']);
+      if (mounted) {
+        setState(() {
+          customers = more ? [...customers, ...page] : page;
+          total = asInt(r['total']);
+          error = null;
+        });
+      }
     } catch (e) {
-      if (mounted) setState(() => error = e);
+      if (mounted && !more) setState(() => error = e);
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() {
+          loading = false;
+          loadingMore = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final q = _q.text.trim().toLowerCase();
-    final digits = q.replaceAll(RegExp(r'\D'), '');
-    final shown = all.where((c) => q.isEmpty || asString(c['name']).toLowerCase().contains(q) || (digits.length >= 3 && asString(c['phone']).contains(digits))).take(100).toList();
+    final hasMore = customers.length < total;
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('nav.customers'))),
       body: Column(children: [
-        Padding(padding: const EdgeInsets.all(12), child: TextField(controller: _q, onChanged: (_) => setState(() {}), decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.tr('search.placeholder')))),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: TextField(
+            controller: _q,
+            onChanged: (_) {
+              _debounce?.cancel();
+              _debounce = Timer(const Duration(milliseconds: 350), _load);
+            },
+            decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.tr('search.placeholder')),
+          ),
+        ),
         Expanded(
           child: loading
               ? const LoadingView()
               : error != null
                   ? ErrorView(error: error!, onRetry: _load)
                   : ListView.separated(
-                      itemCount: shown.length,
+                      itemCount: customers.length + (hasMore ? 1 : 0),
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (_, i) {
-                        final c = shown[i];
+                        if (i == customers.length) {
+                          return Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(children: [
+                              Text(context.tr('common.shownOf', params: {'shown': customers.length, 'total': total}), style: TextStyle(color: Brand.muted, fontSize: 12)),
+                              const SizedBox(height: 6),
+                              OutlinedButton(onPressed: loadingMore ? null : () => _load(more: true), child: loadingMore ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : Text(context.tr('common.loadMore'))),
+                            ]),
+                          );
+                        }
+                        final c = customers[i];
                         return ListTile(
                           title: Text(asString(c['name']), style: const TextStyle(fontWeight: FontWeight.w800)),
                           subtitle: Text('${formatPhone(asString(c['phone']))} · ${c['requestsCount'] ?? 0}'),

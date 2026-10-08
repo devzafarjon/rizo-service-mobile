@@ -279,6 +279,10 @@ ThemeData buildTheme({bool dark = false}) {
     chipTheme: ChipThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
       side: BorderSide.none,
+      // Without these a chip takes the card's colour in dark mode and looks like bare text.
+      backgroundColor: p.surfaceAlt,
+      selectedColor: p.purpleTint,
+      checkmarkColor: p.purple,
       labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
     ),
     navigationBarTheme: NavigationBarThemeData(

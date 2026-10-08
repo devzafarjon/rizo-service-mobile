@@ -63,10 +63,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             LayoutBuilder(builder: (context, c) {
               final cols = c.maxWidth >= 700 ? 4 : 2;
               final cards = [
-                _Kpi(context.tr('reports.requests'), formatNumber(d.total('requests')), _delta(d.total('requests'), d.previous?['requests'] is num ? (d.previous!['requests'] as num).toDouble() : null)),
-                _Kpi(context.tr('reports.revenue'), formatMoney(d.total('revenue')), _delta(d.total('revenue'), d.previous?['revenue'] is num ? (d.previous!['revenue'] as num).toDouble() : null)),
-                _Kpi(context.tr('reports.profit'), formatMoney(d.total('profit')), _delta(d.total('profit'), d.previous?['profit'] is num ? (d.previous!['profit'] as num).toDouble() : null)),
-                _Kpi(context.tr('dashboard.avgWork'), formatDurationHours(d.totalOrNull('avgWorkMinutes') == null ? null : d.totalOrNull('avgWorkMinutes')! / 60), null),
+                _Kpi(context.tr('reports.requests'), formatNumber(d.total('requests')), _delta(d.total('requests'), d.previous?['requests'] is num ? (d.previous!['requests'] as num).toDouble() : null), reserveDelta: true),
+                _Kpi(context.tr('reports.revenue'), formatMoney(d.total('revenue')), _delta(d.total('revenue'), d.previous?['revenue'] is num ? (d.previous!['revenue'] as num).toDouble() : null), reserveDelta: true),
+                _Kpi(context.tr('reports.profit'), formatMoney(d.total('profit')), _delta(d.total('profit'), d.previous?['profit'] is num ? (d.previous!['profit'] as num).toDouble() : null), reserveDelta: true),
+                _Kpi(context.tr('dashboard.avgWork'), formatDurationHours(d.totalOrNull('avgWorkMinutes') == null ? null : d.totalOrNull('avgWorkMinutes')! / 60), null, reserveDelta: true),
                 _Kpi(context.tr('reports.avgHours'), formatDurationHours(d.totalOrNull('avgResolutionHours')), null),
                 _Kpi(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)} (${d.total('ratingCount').round()})', null),
                 _Kpi(context.tr('dashboard.legalOverdue'), formatNumber(d.total('legalOverdue')), null, bad: d.total('legalOverdue') > 0),
@@ -76,7 +76,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _Kpi(context.tr('dashboard.callbackCost'), formatMoney(asDouble(d.service['callbackCost'])), null, bad: asDouble(d.service['callbackCost']) > 0),
                 _Kpi(context.tr('dashboard.partsWait'), formatDurationHours(d.service['avgPartsWaitHours'] is num ? (d.service['avgPartsWaitHours'] as num).toDouble() : null), null),
               ];
-              return GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.55, children: cards);
+              return GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: cols == 2 ? 1.4 : 1.55, children: cards);
             }),
             const SizedBox(height: 12),
             Section(
@@ -117,21 +117,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 class _Kpi extends StatelessWidget {
-  const _Kpi(this.label, this.value, this.delta, {this.bad = false});
+  const _Kpi(this.label, this.value, this.delta, {this.bad = false, this.reserveDelta = false});
   final String label;
   final String value;
   final int? delta;
   final bool bad;
+
+  /// Keep the room of the "change vs the previous period" line on tiles that have none, so the values of tiles next to
+  /// each other sit on the same line.
+  final bool reserveDelta;
+
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+        // The label stays at the top, the value (and the change line) at the bottom, whatever the tile holds.
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted), maxLines: 2, overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 4),
-          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: bad ? Brand.red : Brand.ink))),
-          if (delta != null) Text('${delta! > 0 ? '▲' : (delta! < 0 ? '▼' : '•')} ${delta!.abs()}% ${context.tr('dashboard.vsPrevious')}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: delta! >= 0 ? Brand.green : Brand.red)),
+          Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: bad ? Brand.red : Brand.ink))),
+            if (delta != null)
+              Text('${delta! > 0 ? '▲' : (delta! < 0 ? '▼' : '•')} ${delta!.abs()}% ${context.tr('dashboard.vsPrevious')}', maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: delta! >= 0 ? Brand.green : Brand.red))
+            else if (reserveDelta)
+              const SizedBox(height: 36),
+          ]),
         ]),
       ),
     );

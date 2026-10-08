@@ -628,6 +628,8 @@ class PortalRequest {
         product = ProductRef.fromJson(raw['product']),
         technicianName = raw['assignedTechnician'] is Map ? _s((raw['assignedTechnician'] as Map)['name']) : null,
         feedbackRating = raw['feedback'] is Map ? _int((raw['feedback'] as Map)['rating']) : null,
+        feedbackComment = raw['feedback'] is Map ? _s((raw['feedback'] as Map)['comment']) : null,
+        feedbackTags = raw['feedback'] is Map && (raw['feedback'] as Map)['tags'] is List ? ((raw['feedback'] as Map)['tags'] as List).map((e) => e.toString()).toList() : const <String>[],
         canFeedback = _bool(raw['canFeedback']),
         pickupConfirmedAt = _dt(raw['pickupConfirmedAt']),
         canConfirmPickup = _bool(raw['canConfirmPickup']),
@@ -661,6 +663,8 @@ class PortalRequest {
   final ProductRef product;
   final String? technicianName;
   final int? feedbackRating;
+  final String? feedbackComment;
+  final List<String> feedbackTags;
   final bool canFeedback;
   final DateTime? pickupConfirmedAt;
   final bool canConfirmPickup;

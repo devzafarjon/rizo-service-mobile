@@ -6,6 +6,7 @@ import 'package:rizo_core/rizo_core.dart';
 import '../common/settings_screen.dart';
 import '../tech/scan_screen.dart';
 import 'dashboard_screen.dart';
+import 'feedback_screen.dart';
 import 'more_screens.dart';
 import 'request_detail_screen.dart';
 import 'requests_screen.dart';
@@ -123,6 +124,7 @@ class _MoreScreen extends StatelessWidget {
         tile(Icons.engineering_outlined, context.tr('kanban.technicians'), const TechniciansScreen()),
         tile(Icons.inventory_2_outlined, context.tr('nav.partOrders'), const PartOrdersScreen()),
         tile(Icons.people_outline, context.tr('nav.customers'), const CustomersScreen()),
+        if (user.isAdmin) tile(Icons.reviews_outlined, context.tr('reports.nav.feedback'), const FeedbackScreen()),
         tile(
           Icons.qr_code_scanner,
           context.tr('nav.scan'),

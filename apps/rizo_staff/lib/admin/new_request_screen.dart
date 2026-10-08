@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
@@ -256,22 +258,36 @@ class _CustomerPickerState extends State<_CustomerPicker> {
   final _phone = TextEditingController();
   final _address = TextEditingController();
 
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
-    widget.api.get('/api/staff/customers').then((r) {
+    _search();
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  /// The server searches by name or phone and returns at most 60 customers, so the picker stays fast with a long customer list.
+  Future<void> _search() async {
+    try {
+      final r = await widget.api.get('/api/staff/customers', query: {'q': _query.text.trim(), 'limit': 60});
       if (mounted) {
         setState(() {
-            all = asList(asMap(r)['customers']).map(_CustomerRow.new).toList();
-            loading = false;
-          });
+          all = asList(asMap(r)['customers']).map(_CustomerRow.new).toList();
+          loading = false;
+        });
       }
-    }).catchError((Object e) {
+    } catch (e) {
       if (mounted) {
         setState(() => loading = false);
         showSnack(context, context.errorText(e), error: true);
       }
-    });
+    }
   }
 
   Future<void> _create() async {
@@ -285,9 +301,7 @@ class _CustomerPickerState extends State<_CustomerPicker> {
 
   @override
   Widget build(BuildContext context) {
-    final q = _query.text.trim().toLowerCase();
-    final digits = q.replaceAll(RegExp(r'\D'), '');
-    final shown = all.where((c) => q.isEmpty || c.name.toLowerCase().contains(q) || (digits.length >= 3 && c.phone.contains(digits))).take(60).toList();
+    final shown = all;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: SizedBox(
@@ -304,7 +318,7 @@ class _CustomerPickerState extends State<_CustomerPicker> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: Row(children: [
-                    Expanded(child: TextField(controller: _query, onChanged: (_) => setState(() {}), decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.tr('search.placeholder')))),
+                    Expanded(child: TextField(controller: _query, onChanged: (_) { _debounce?.cancel(); _debounce = Timer(const Duration(milliseconds: 350), _search); }, decoration: InputDecoration(prefixIcon: const Icon(Icons.search), hintText: context.tr('search.placeholder')))),
                     const SizedBox(width: 8),
                     IconButton.filledTonal(onPressed: () => setState(() => creating = true), icon: const Icon(Icons.person_add_alt), tooltip: context.tr('mobile.newCustomer')),
                   ]),

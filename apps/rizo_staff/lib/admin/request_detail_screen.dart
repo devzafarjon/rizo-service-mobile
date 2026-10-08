@@ -118,6 +118,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     ];
     final right = <Widget>[
       _payments(job, summary, payments),
+      if (payload['feedback'] is Map) _FeedbackBox(feedback: asMap(payload['feedback'])),
       _notes(notes),
       Section(title: context.tr('detail.timeline'), hint: context.tr('detail.timelineHint'), child: TimelineView(timeline)),
       _completion(payload, locale),
@@ -590,5 +591,33 @@ class _NoteFormState extends State<_NoteForm> {
         },
       ),
     ]);
+  }
+}
+
+/// The customer's rating of this job (stars, tags and comment), shown to the office once it exists.
+class _FeedbackBox extends StatelessWidget {
+  const _FeedbackBox({required this.feedback});
+  final Json feedback;
+
+  @override
+  Widget build(BuildContext context) {
+    final rating = asInt(feedback['rating']);
+    final comment = asString(feedback['comment']);
+    final tags = feedback['tags'] is List ? (feedback['tags'] as List).map((e) => e.toString()).toList() : <String>[];
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Section(
+        title: context.tr('reports.feedback.onRequest'),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            for (var v = 1; v <= 5; v++) Icon(v <= rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 22, color: v <= rating ? Brand.orange : Brand.line),
+            const SizedBox(width: 8),
+            Text('$rating / 5', style: const TextStyle(fontWeight: FontWeight.w900)),
+          ]),
+          if (comment.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(comment)),
+          if (tags.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Wrap(spacing: 6, runSpacing: 4, children: [for (final tag in tags) Pill(context.tr('feedback.tag.$tag'), color: Brand.purple, background: Brand.purpleTint)])),
+        ]),
+      ),
+    );
   }
 }

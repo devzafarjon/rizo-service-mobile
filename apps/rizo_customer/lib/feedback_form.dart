@@ -22,7 +22,26 @@ class _FeedbackFormState extends State<FeedbackForm> {
   Widget build(BuildContext context) {
     final r = widget.request;
     if (r.feedbackRating != null) {
-      return Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('feedback.rated', params: {'rating': r.feedbackRating}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w900)));
+      final rated = r.feedbackRating!;
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(color: Brand.orangeTint, borderRadius: BorderRadius.circular(14)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            for (var v = 1; v <= 5; v++) Icon(v <= rated ? Icons.star_rounded : Icons.star_outline_rounded, size: 22, color: v <= rated ? Brand.orange : Brand.line),
+            const SizedBox(width: 8),
+            Expanded(child: Text(context.tr('feedback.rated', params: {'rating': rated}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w900))),
+          ]),
+          if (r.feedbackTags.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 4, children: [for (final tag in r.feedbackTags) Chip(label: Text(context.tr('feedback.tag.$tag'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)), visualDensity: VisualDensity.compact, backgroundColor: Colors.white)]),
+          ],
+          if (r.feedbackComment != null && r.feedbackComment!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(r.feedbackComment!, style: const TextStyle(fontSize: 14)),
+          ],
+        ]),
+      );
     }
     if (!r.canFeedback) return const SizedBox.shrink();
     return Section(
