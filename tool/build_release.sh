@@ -26,7 +26,7 @@ for pair in "rizo_staff:RIZO-Texnik" "rizo_customer:RIZO-Mijoz"; do
     cp "$aab" "$out/aab/$name.aab"
     flutter build ios --release --no-codesign --dart-define=API_URL="$api" --dart-define=WEB_URL="$web"
     tmp="$(mktemp -d)"; mkdir "$tmp/Payload"; cp -R build/ios/iphoneos/Runner.app "$tmp/Payload/"
-    rm -f "$out/ios/$name-imzosiz.ipa"; ( cd "$tmp" && ditto -c -k --sequesterRsrc --keepParent Payload "$out/ios/$name-imzosiz.ipa" ) )
+    rm -f "$out/ios/$name-imzosiz.ipa"; ( cd "$tmp" && zip -qry "$out/ios/$name-imzosiz.ipa" Payload ) )
 done
 # Sanity check: the address compiled into each APK must be exactly the one asked for.
 for name in RIZO-Texnik RIZO-Mijoz; do
