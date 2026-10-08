@@ -134,13 +134,45 @@ class _PayCardState extends State<PayCard> {
           Text(context.tr('pay.body', params: {'amount': formatMoney(asDouble(data['amount']))})),
           const SizedBox(height: 10),
           Wrap(spacing: 8, runSpacing: 8, children: [
-            if (data['payme'] != null) FilledButton(style: FilledButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: () => openUri(context, Uri.parse(data['payme'].toString())), child: const Text('Payme')),
-            if (data['click'] != null) OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: () => openUri(context, Uri.parse(data['click'].toString())), child: const Text('Click')),
+            if (data['payme'] != null) _PayButton(provider: 'payme', onTap: () => openUri(context, Uri.parse(data['payme'].toString()))),
+            if (data['click'] != null) _PayButton(provider: 'click', onTap: () => openUri(context, Uri.parse(data['click'].toString()))),
           ]),
+          if (data['placeholder'] == true) ...[
+            const SizedBox(height: 6),
+            Text(context.tr('pay.placeholder'), style: TextStyle(color: Brand.muted, fontSize: 12)),
+          ],
           const SizedBox(height: 8),
           Text(context.tr('pay.note'), style: TextStyle(color: Brand.muted, fontSize: 12)),
         ]),
       ),
+    );
+  }
+}
+
+/// Payme / Click button with the provider's colour mark (a letter mark, not the official logo).
+class _PayButton extends StatelessWidget {
+  const _PayButton({required this.provider, required this.onTap});
+  final String provider;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isPayme = provider == 'payme';
+    final color = isPayme ? const Color(0xFF00B8B8) : const Color(0xFF0A9BE6);
+    return OutlinedButton(
+      style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44), padding: const EdgeInsets.symmetric(horizontal: 14)),
+      onPressed: onTap,
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 24,
+          height: 24,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
+          child: Text(isPayme ? 'P' : 'C', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13)),
+        ),
+        const SizedBox(width: 8),
+        Text(isPayme ? 'Payme' : 'Click'),
+      ]),
     );
   }
 }

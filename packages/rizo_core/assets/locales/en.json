@@ -2021,7 +2021,8 @@
   "pay": {
     "title": "Pay online",
     "body": "Amount due: {{amount}}.",
-    "note": "After you pay, the service records it. If it takes long, call the service."
+    "note": "After you pay, the service records it. If it takes long, call the service.",
+    "placeholder": "For now the provider’s own site opens. A service staff member records the payment."
   },
   "visit": {
     "title": "Visit time",
