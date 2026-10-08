@@ -12,15 +12,23 @@ class AppConfig {
 
   static String _baseUrl = _buildTimeUrl.isNotEmpty ? _buildTimeUrl : _debugDefault();
 
+  static const String _productionApi = 'https://rizo-service-api.onrender.com';
+  static const String _productionWeb = 'https://rizo-service-full.netlify.app';
+
   static String _debugDefault() {
+    // A release build made without --dart-define=API_URL must never point at localhost: use the production server.
+    if (kReleaseMode) return _productionApi;
     // The Android emulator reaches the host machine through 10.0.2.2.
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) return 'http://10.0.2.2:4000';
     return 'http://localhost:4000';
   }
 
   /// The public website (Netlify), used only to build the customer's tracking link: --dart-define=WEB_URL=https://...
-  static const String _webUrl = String.fromEnvironment('WEB_URL', defaultValue: 'http://localhost:5173');
-  static String get webUrl => _webUrl.replaceAll(RegExp(r'/+$'), '');
+  static const String _webUrl = String.fromEnvironment('WEB_URL', defaultValue: '');
+  static String get webUrl {
+    final value = _webUrl.isNotEmpty ? _webUrl : (kReleaseMode ? _productionWeb : 'http://localhost:5173');
+    return value.replaceAll(RegExp(r'/+$'), '');
+  }
 
   static bool get canChangeServer => kDebugMode || _allowChangeFlag;
   static String get baseUrl => _baseUrl.replaceAll(RegExp(r'/+$'), '');
