@@ -11,6 +11,7 @@ class EarningsScreen extends StatefulWidget {
 class _EarningsScreenState extends State<EarningsScreen> {
   String preset = 'month';
   Json? data;
+  List<Json> statements = [];
   Object? error;
   bool loading = true;
 
@@ -26,8 +27,19 @@ class _EarningsScreenState extends State<EarningsScreen> {
       error = null;
     });
     try {
-      final result = await context.read<StaffSession>().api.get('/api/staff/my-jobs/earnings', query: {'preset': preset});
-      if (mounted) setState(() => data = asMap(result));
+      final api = context.read<StaffSession>().api;
+      final result = await api.get('/api/staff/my-jobs/earnings', query: {'preset': preset});
+      // The pay statements the system calculated by itself; a failure here must not hide the earnings above.
+      List<Json> mine = [];
+      try {
+        mine = asList(asMap(await api.get('/api/staff/auto-jobs/my-statements'))['statements']).map(asMap).toList();
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          data = asMap(result);
+          statements = mine;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => error = e);
     } finally {
@@ -62,6 +74,22 @@ class _EarningsScreenState extends State<EarningsScreen> {
                 Text(context.tr('payroll.total'), style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700)),
                 Text(formatMoney(asDouble(data!['total'])), style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w900)),
               ]),
+            ),
+            const SizedBox(height: 12),
+            Section(
+              title: context.tr('auto.myStatements.title'),
+              child: statements.isEmpty
+                  ? Text(context.tr('auto.myStatements.empty'), style: TextStyle(color: Brand.muted))
+                  : Column(children: [
+                      for (final row in statements)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text('${formatDate(asString(row['from']))} – ${formatDate(asString(row['to']))}${row['kind'] == 'manual' ? ' · ${context.tr('auto.statements.interim')}' : ''}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                          subtitle: Text(context.tr('auto.myStatements.jobs', params: {'count': row['jobs']})),
+                          trailing: Text(formatMoney(asDouble(row['total'])), style: const TextStyle(fontWeight: FontWeight.w900)),
+                        ),
+                    ]),
             ),
             const SizedBox(height: 12),
             Section(
