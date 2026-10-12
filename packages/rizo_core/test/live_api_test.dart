@@ -167,6 +167,23 @@ void main() {
     }, skip: !_live);
   });
 
+  group('telegram (connect from the app)', () {
+    test('staff and customers can read the bot status; without a bot the link says so', () async {
+      final staff = await _signedIn('staff', '998900000002', 'tech123');
+      final status = TelegramStatus(asMap(await staff.get('/api/staff/telegram')));
+      expect(status.linked, isFalse);
+      final customer = await _signedIn('customer', '998900000003', 'customer123');
+      final cs = TelegramStatus(asMap(await customer.get('/api/customer/telegram')));
+      expect(cs.linked, isFalse);
+      if (status.configured) {
+        final link = asMap(await staff.post('/api/staff/telegram/link'));
+        expect(link['url'].toString(), startsWith('https://t.me/'));
+      } else {
+        await expectLater(staff.post('/api/staff/telegram/link'), throwsA(isA<ApiException>()));
+      }
+    }, skip: !_live);
+  });
+
   group('customer (RIZO Mijoz)', () {
     late ApiClient api;
     setUpAll(() async {

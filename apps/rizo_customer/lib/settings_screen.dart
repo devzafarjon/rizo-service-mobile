@@ -33,10 +33,10 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            const SizedBox(height: 8),
-            Text(user.telegramLinked ? context.tr('account.telegramLinked') : context.tr('account.telegramHow'), style: TextStyle(color: Brand.muted, fontSize: 12)),
           ]),
         ),
+        const SizedBox(height: 12),
+        TelegramCard(api: session.api, scope: 'customer', onChanged: session.refreshUser),
         const SizedBox(height: 12),
         Section(
           title: context.tr('account.data'),

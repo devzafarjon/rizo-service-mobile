@@ -57,6 +57,8 @@ class SettingsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const ThemeModeSetting(),
+        const SizedBox(height: 12),
+        TelegramCard(api: session.api, scope: 'staff', isAdmin: user.isAdmin),
         if (AppConfig.canChangeServer) ...[
           const SizedBox(height: 12),
           Card(child: ListTile(leading: const Icon(Icons.dns_outlined), title: Text(context.tr('mobile.serverTitle')), subtitle: Text(AppConfig.baseUrl), onTap: () => showServerDialog(context))),

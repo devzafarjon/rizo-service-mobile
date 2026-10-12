@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Brightness, Colors, ThemeMode;
+import 'package:flutter/material.dart' show Brightness, Colors, MaterialApp, Scaffold, SingleChildScrollView, ThemeMode;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -545,6 +545,61 @@ void _growthTests() {
       final part = asList(asMap(raw['catalog'])['parts']).single as Map;
       expect(part['homeStock'], 1);
       expect(part['stockQuantity'], 38);
+    });
+  });
+  group('telegram', () {
+    test('the status the server sends', () {
+      final on = TelegramStatus({'configured': true, 'linked': true, 'username': 'rizo_bot', 'notify': false});
+      expect(on.configured && on.linked && !on.notify && on.username == 'rizo_bot', isTrue);
+      final off = TelegramStatus({'configured': false, 'linked': false});
+      expect(!off.configured && !off.linked && off.notify && off.username == null, isTrue);
+    });
+
+    test('the words of the Telegram card exist in every language', () {
+      for (final code in ['uz', 'ru', 'en']) {
+        final b = _bundle(code);
+        final tg = b['telegram'] as Map<String, dynamic>;
+        for (final key in ['title', 'connected', 'notConnected', 'connect', 'connectHint', 'disconnect', 'alertsOn', 'notSetUp', 'customerBody', 'staffBody']) {
+          expect(tg[key], isA<String>(), reason: '$code telegram.$key');
+        }
+      }
+    });
+  });
+  group('telegram card', () {
+    Future<void> show(WidgetTester tester, Map<String, Object?> status, {String scope = 'staff', List<String>? calls}) async {
+      Translator.I.loadForTest({'uz': _bundle('uz'), 'ru': _bundle('ru'), 'en': _bundle('en')}, locale: 'en');
+      final api = ApiClient(client: MockClient((request) async {
+        calls?.add('${request.method} ${request.url.path}');
+        return _json(status, 200);
+      }));
+      await tester.pumpWidget(ChangeNotifierProvider<Translator>.value(value: Translator.I, child: MaterialApp(home: Scaffold(body: SingleChildScrollView(child: TelegramCard(api: api, scope: scope))))));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('not connected: the connect button; staff and customers read different words', (tester) async {
+      await show(tester, {'configured': true, 'linked': false});
+      expect(find.text('Not connected'), findsOneWidget);
+      expect(find.text('Connect Telegram'), findsOneWidget);
+      expect(find.text('Disconnect'), findsNothing);
+    });
+
+    testWidgets('connected staff can mute the alerts and disconnect', (tester) async {
+      await show(tester, {'configured': true, 'linked': true, 'notify': true});
+      expect(find.text('Connected'), findsOneWidget);
+      expect(find.text('Send alerts to Telegram'), findsOneWidget);
+      expect(find.text('Disconnect'), findsOneWidget);
+    });
+
+    testWidgets('a connected customer has no alerts switch', (tester) async {
+      await show(tester, {'configured': true, 'linked': true}, scope: 'customer');
+      expect(find.text('Send alerts to Telegram'), findsNothing);
+      expect(find.text('Disconnect'), findsOneWidget);
+    });
+
+    testWidgets('a bot that is not set up says so instead of offering a button', (tester) async {
+      await show(tester, {'configured': false, 'linked': false});
+      expect(find.text('Connect Telegram'), findsNothing);
+      expect(find.textContaining('not set up'), findsOneWidget);
     });
   });
 }

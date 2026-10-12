@@ -15,6 +15,7 @@ export 'src/status.dart';
 export 'src/theme.dart';
 export 'src/widgets/basics.dart';
 export 'src/widgets/forms.dart';
+export 'src/widgets/telegram_card.dart';
 export 'src/widgets/visit_picker.dart';
 export 'src/app_shell.dart';
 export 'package:provider/provider.dart';
