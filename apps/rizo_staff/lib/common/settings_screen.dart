@@ -85,6 +85,7 @@ class SettingsScreen extends StatelessWidget {
   String _roleLabel(BuildContext context, StaffUser user) {
     if (user.isAdmin) return context.tr('shell.adminRole');
     if (user.isReceptionist) return context.tr('shell.receptionistRole');
+    if (user.isWarehouse) return context.tr('staffAdmin.roles.warehouse');
     return user.technicianType == null ? context.tr('role.technician') : context.tr('techType.${user.technicianType}');
   }
 }

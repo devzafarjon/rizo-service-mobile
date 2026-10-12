@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
 import '../common/settings_screen.dart';
+import '../parts/parts_screen.dart';
 import '../tech/scan_screen.dart';
+import '../warehouse/tech_stock_screen.dart';
+import '../warehouse/warehouse_screen.dart';
 import 'dashboard_screen.dart';
 import 'feedback_screen.dart';
 import 'more_screens.dart';
@@ -31,7 +34,7 @@ class _AdminHomeState extends State<AdminHome> {
     PushService.I.openRequest.addListener(_openFromPush);
     PushService.I.arrived.addListener(_onPushArrived);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openFromPush());
-    if (_user.isAdmin) {
+    if (_user.isAdmin || _user.isWarehouse) {
       _unread();
       _poll = Timer.periodic(const Duration(seconds: 60), (_) => _unread());
     }
@@ -46,7 +49,7 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   void _onPushArrived() {
-    if (_user.isAdmin) _unread();
+    if (_user.isAdmin || _user.isWarehouse) _unread();
   }
 
   @override
@@ -73,10 +76,13 @@ class _AdminHomeState extends State<AdminHome> {
   Widget build(BuildContext context) {
     context.watch<Translator>();
     final user = context.watch<StaffSession>().user!;
-    final bell = user.isAdmin ? NotificationBell(count: unread, onPressed: _openAlerts) : null;
+    final bell = user.isAdmin || user.isWarehouse ? NotificationBell(count: unread, onPressed: _openAlerts) : null;
     final tabs = <({String label, IconData icon, Widget page, int badge})>[
       if (user.isAdmin) (label: tr('nav.dashboard'), icon: Icons.dashboard_outlined, page: DashboardScreen(bell: bell), badge: 0),
-      (label: tr('nav.requests'), icon: Icons.assignment_outlined, page: RequestsScreen(bell: bell), badge: 0),
+      // The warehouse works with spare parts only: its own warehouse (requests to send, stock) is its first screen.
+      if (user.isWarehouse) (label: tr('nav.warehouses'), icon: Icons.warehouse_outlined, page: WarehouseScreen(bell: bell, standalone: false), badge: 0),
+      if (user.isWarehouse) (label: tr('nav.partOrders'), icon: Icons.inventory_2_outlined, page: PartsControlScreen(bell: bell, standalone: false), badge: 0),
+      if (!user.isWarehouse) (label: tr('nav.requests'), icon: Icons.assignment_outlined, page: RequestsScreen(bell: bell), badge: 0),
       (label: tr('mobile.more'), icon: Icons.menu, page: const _MoreScreen(), badge: 0),
     ];
     final current = index.clamp(0, tabs.length - 1);
@@ -120,19 +126,22 @@ class _MoreScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('mobile.more'))),
       body: ListView(padding: const EdgeInsets.all(12), children: [
-        tile(Icons.event_note_outlined, context.tr('calendar.title'), const VisitsScreen()),
-        tile(Icons.engineering_outlined, context.tr('kanban.technicians'), const TechniciansScreen()),
-        tile(Icons.inventory_2_outlined, context.tr('nav.partOrders'), const PartOrdersScreen()),
-        tile(Icons.people_outline, context.tr('nav.customers'), const CustomersScreen()),
+        if (!user.isWarehouse) tile(Icons.event_note_outlined, context.tr('calendar.title'), const VisitsScreen()),
+        if (!user.isWarehouse) tile(Icons.engineering_outlined, context.tr('kanban.technicians'), const TechniciansScreen()),
+        if (!user.isWarehouse) tile(Icons.inventory_2_outlined, context.tr('nav.partOrders'), const PartsControlScreen()),
+        if (!user.isWarehouse) tile(Icons.warehouse_outlined, context.tr('nav.warehouses'), const WarehouseScreen()),
+        if (user.isAdmin || user.isWarehouse) tile(Icons.inventory_outlined, context.tr('nav.techStock'), const TechStockScreen()),
+        if (!user.isWarehouse) tile(Icons.people_outline, context.tr('nav.customers'), const CustomersScreen()),
         if (user.isAdmin) tile(Icons.reviews_outlined, context.tr('reports.nav.feedback'), const FeedbackScreen()),
-        tile(
-          Icons.qr_code_scanner,
-          context.tr('nav.scan'),
-          ScanScreen(resolve: (displayId) async {
-            final r = asMap(await context.read<StaffSession>().api.get('/api/staff/requests/lookup/${Uri.encodeComponent(displayId)}'));
-            return RequestDetailScreen(requestId: asMap(r['request'])['id'].toString());
-          }),
-        ),
+        if (!user.isWarehouse)
+          tile(
+            Icons.qr_code_scanner,
+            context.tr('nav.scan'),
+            ScanScreen(resolve: (displayId) async {
+              final r = asMap(await context.read<StaffSession>().api.get('/api/staff/requests/lookup/${Uri.encodeComponent(displayId)}'));
+              return RequestDetailScreen(requestId: asMap(r['request'])['id'].toString());
+            }),
+          ),
         tile(Icons.settings_outlined, context.tr('mobile.settings'), const SettingsScreen()),
         const SizedBox(height: 8),
         Center(child: Text('${user.name} · ${formatPhone(user.phone)}', style: TextStyle(color: Brand.faint, fontSize: 12))),

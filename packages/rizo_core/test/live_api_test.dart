@@ -98,6 +98,75 @@ void main() {
     }, skip: !_live);
   });
 
+  group('spare-part control (office and warehouse in RIZO Texnik)', () {
+    test('overview, waiting jobs, recommendations, orders and suppliers parse into the app models', () async {
+      final api = await _signedIn('staff', '998900000007', 'ware1234');
+      final me = StaffUser.fromJson(asMap(await api.get('/api/staff/auth/me'))['user']);
+      expect(me.isWarehouse && me.usesApp && me.usesParts && me.editsSuppliers, isTrue);
+      final overview = PartsOverview(asMap(asMap(await api.get('/api/staff/part-orders/overview'))['overview']));
+      expect(overview.waitingRequests, greaterThanOrEqualTo(0));
+      final waiting = asList(asMap(await api.get('/api/staff/part-orders/waiting'))['requests']).map((e) => WaitingRequest(asMap(e))).toList();
+      for (final r in waiting) {
+        expect(r.displayId, isNotEmpty);
+        expect(r.items.every((i) => i.needed >= 0), isTrue);
+      }
+      final groups = asList(asMap(await api.get('/api/staff/part-orders/recommendations'))['groups']).map((e) => RecommendationGroup(asMap(e))).toList();
+      for (final g in groups) {
+        expect(g.items.every((i) => i.recommended >= 1 && i.reasons.isNotEmpty), isTrue);
+      }
+      final orders = asList(asMap(await api.get('/api/staff/part-orders'))['orders']).map((e) => PartOrderRow(asMap(e))).toList();
+      expect(orders.every((o) => o.partId.isNotEmpty), isTrue);
+      final suppliers = asList(asMap(await api.get('/api/staff/suppliers'))['suppliers']).map((e) => SupplierInfo(asMap(e))).toList();
+      expect(suppliers.every((s) => s.name.isNotEmpty), isTrue);
+      expect(asList(asMap(await api.get('/api/staff/alerts'))['notifications']), isA<List>());
+    }, skip: !_live);
+
+    test('the admin dashboard carries the parts numbers and a technician is closed out', () async {
+      final admin = await _signedIn('staff', '998900000001', 'admin123');
+      final data = DashboardData(asMap(await admin.get('/api/staff/reports/dashboard', query: {'preset': 'month'})));
+      expect(data.parts, isNotNull);
+      final tech = await _signedIn('staff', '998900000002', 'tech123');
+      await expectLater(tech.get('/api/staff/part-orders/overview'), throwsA(isA<ApiException>()));
+    }, skip: !_live);
+  });
+
+  group('warehouses (keeper, technician and front desk in RIZO Texnik)', () {
+    test('the keeper sees their warehouse: list, stock, restock, history and requests parse into the app models', () async {
+      final api = await _signedIn('staff', '998900000007', 'ware1234');
+      final mine = asMap(await api.get('/api/staff/warehouses/mine'));
+      expect(mine['manages'], true);
+      final warehouses = asList(asMap(await api.get('/api/staff/warehouses'))['warehouses']).map((e) => Warehouse(asMap(e))).toList();
+      expect(warehouses.any((w) => w.isCentral), isTrue);
+      final id = mine['warehouseId'].toString();
+      final stock = asList(asMap(await api.get('/api/staff/warehouses/$id/stock', query: {'stocked': '1'}))['items']).map((e) => WarehouseStockItem(asMap(e))).toList();
+      expect(stock.every((i) => i.partId.isNotEmpty && i.quantity >= 0), isTrue);
+      final restock = asList(asMap(await api.get('/api/staff/warehouses/$id/restock'))['suggestions']).map((e) => RestockSuggestion(asMap(e))).toList();
+      for (final r in restock) {
+        expect(r.options.where((o) => o.recommended).length, 1);
+      }
+      final history = asList(asMap(await api.get('/api/staff/warehouses/$id/movements'))['movements']).map((e) => WarehouseMovement(asMap(e))).toList();
+      expect(history.every((m) => m.kind.isNotEmpty), isTrue);
+      final transfers = asList(asMap(await api.get('/api/staff/transfers', query: {'warehouseId': id, 'direction': 'out', 'status': 'open'}))['transfers']).map((e) => StockTransfer(asMap(e))).toList();
+      expect(transfers.every((t) => t.isOpen), isTrue);
+    }, skip: !_live);
+
+    test('a technician asks for a part and the sources come ranked; the front desk can ask but not run the warehouse', () async {
+      final tech = await _signedIn('staff', '998900000002', 'tech123');
+      final parts = asList(asMap(await tech.get('/api/staff/my-jobs/parts'))['parts']).map(asMap).toList();
+      expect(parts, isNotEmpty);
+      final src = asMap(await tech.get('/api/staff/my-jobs/part-sources', query: {'partId': parts.first['id'].toString(), 'quantity': '1'}));
+      final options = asList(src['options']).map((e) => SourceOption(asMap(e))).toList();
+      expect(options.where((o) => o.recommended).length, 1);
+      expect(options.last.isSupplier, isTrue);
+      final mineTransfers = asList(asMap(await tech.get('/api/staff/my-jobs/transfers'))['transfers']).map((e) => StockTransfer(asMap(e))).toList();
+      expect(mineTransfers, isA<List<StockTransfer>>());
+      final desk = await _signedIn('staff', '998900000005', 'desk123');
+      expect((asMap(await desk.get('/api/staff/warehouses/mine')))['manages'], false);
+      await expectLater(desk.post('/api/staff/transfers/none/ship'), throwsA(isA<ApiException>()));
+      await expectLater(tech.get('/api/staff/warehouses'), throwsA(isA<ApiException>()));
+    }, skip: !_live);
+  });
+
   group('customer (RIZO Mijoz)', () {
     late ApiClient api;
     setUpAll(() async {

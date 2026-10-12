@@ -5,7 +5,9 @@ import 'package:rizo_core/rizo_core.dart';
 
 import '../common/estimate_widgets.dart';
 import '../common/timeline_view.dart';
+import '../warehouse/source_picker.dart';
 import 'actions.dart';
+import 'part_request_sheet.dart';
 
 /// One job in detail: workflow, estimate, photos, services, parts, extras, outcome and completion.
 class JobScreen extends StatefulWidget {
@@ -100,7 +102,7 @@ class _JobScreenState extends State<JobScreen> {
       _photos(data, done),
       _services(data, done),
       _parts(data, done),
-      if (data.partOrders.isNotEmpty) _partOrders(data),
+      if (data.partOrders.isNotEmpty || data.partTransfers.isNotEmpty) _partOrders(data),
       _extras(data, done),
       if (repair) _ResolutionSection(key: ValueKey('${data.resolutionType}-${data.replacement?['serialNumber']}'), data: data, disabled: done || _busy, onSave: (args) => _perform('resolution', args)),
       _cost(data),
@@ -373,7 +375,7 @@ class _JobScreenState extends State<JobScreen> {
               for (final item in data.catalogParts)
                 Builder(builder: (context) {
                   final line = data.partLines.cast<Json?>().firstWhere((l) => l!['sparePartId'] == item.id, orElse: () => null);
-                  final stock = item.stockQuantity ?? 0;
+                  final stock = item.shelf;
                   // Parts the technician carries count as available even when the warehouse has none left.
                   final out = item.available <= 0;
                   final blocked = out && data.blockZeroStock && line == null;
@@ -399,7 +401,7 @@ class _JobScreenState extends State<JobScreen> {
                       ),
                       if (out && line == null)
                         OutlinedButton(
-                          onPressed: done || _busy ? null : () => _perform('partOrder', {'sparePartId': item.id, 'quantity': 1}),
+                          onPressed: done || _busy ? null : () => _requestPart(item),
                           style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 12)),
                           child: Text(context.tr('parts.order')),
                         ),
@@ -415,12 +417,27 @@ class _JobScreenState extends State<JobScreen> {
     );
   }
 
+  /// The part is not on the shelf: choose where it comes from (online) or let the server pick the fastest (offline).
+  Future<void> _requestPart(CatalogChoice item) async {
+    final picked = await showPartRequestSheet(context, jobId: widget.jobId, part: item);
+    if (picked == null || !mounted) return;
+    await _perform('partRequest', {'sparePartId': item.id, 'quantity': picked.quantity, if (picked.note != null) 'note': picked.note, if (picked.source != null) 'source': picked.source});
+  }
+
   Widget _partOrders(JobWork data) {
     final locale = Translator.I.locale;
     return Section(
       title: context.tr('parts.orders'),
       hint: context.tr('parts.ordersHint'),
       child: Column(children: [
+        for (final transfer in data.partTransfers)
+          ListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: Text('${transfer.part.localized(locale)} × ${transfer.quantity}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            subtitle: Text([transfer.fromName, if (transfer.etaAt != null) formatDate(transfer.etaAt!), if (transfer.rejectionReason != null) transfer.rejectionReason!].join(' · ')),
+            trailing: transferPill(transfer.status),
+          ),
         for (final order in data.partOrders)
           ListTile(
             dense: true,

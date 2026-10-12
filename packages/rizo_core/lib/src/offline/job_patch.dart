@@ -148,6 +148,7 @@ class JobPatch {
   static void _stock(Json part, int delta) {
     if (part.isEmpty || part['stockQuantity'] is! num) return;
     part['stockQuantity'] = ((part['stockQuantity'] as num).toInt() + delta).clamp(0, 1 << 30);
+    if (part['homeStock'] is num) part['homeStock'] = ((part['homeStock'] as num).toInt() + delta).clamp(0, 1 << 30);
   }
 
   static void addExtra(Json p, String opId, String description, num price) {

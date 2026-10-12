@@ -1,3 +1,4 @@
+import 'part_wait_banner.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -95,6 +96,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           ),
         ),
         if (r.enRouteAt != null && !isTerminalStatus(r.status)) _banner(Icons.local_shipping_outlined, context.tr('portal.technicianOnTheWay', params: {'name': r.technicianName ?? ''}), Brand.orangeTint, Brand.orangeText),
+        PartWaitBanner(wait: r.partWait),
         VisitCard(request: r, api: _api, onChanged: (response, {String? success}) async {
           _apply(response);
           if (mounted && success != null) showSnack(context, success);

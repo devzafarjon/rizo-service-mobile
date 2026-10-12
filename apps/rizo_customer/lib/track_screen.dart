@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
 import 'estimate_card.dart';
+import 'part_wait_banner.dart';
 
 /// Check a request without signing in: request number + the phone number on the account.
 class TrackScreen extends StatefulWidget {
@@ -121,6 +122,7 @@ class _TrackResultScreenState extends State<TrackResultScreen> {
                       ]),
                     ),
                   ),
+                  if (d['partWait'] is Map) Padding(padding: const EdgeInsets.only(top: 12), child: PartWaitBanner(wait: PartWait.from(d['partWait']))),
                   if (d['canConfirmPickup'] == true) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.greenTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('track.readyForPickup'), style: TextStyle(color: Brand.green, fontWeight: FontWeight.w800)))),
                   if (d['rejectionReason'] != null) Padding(padding: const EdgeInsets.only(top: 12), child: Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Brand.redTint, borderRadius: BorderRadius.circular(14)), child: Text(context.tr('portal.rejectedBecause', params: {'reason': d['rejectionReason']}), style: TextStyle(color: Brand.red, fontWeight: FontWeight.w800)))),
                   if (estimate != null) ...[

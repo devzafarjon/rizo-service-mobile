@@ -255,6 +255,7 @@ class TechRepository extends ChangeNotifier {
       case 'estimate':
         JobPatch.estimate(payload, id, lines: (args['lines'] as List).map(asMap).toList(), note: args['note']?.toString(), send: args['send'] == true, byName: session.user?.name);
       case 'partOrder':
+      case 'partRequest':
         JobPatch.partOrder(payload, id, args['sparePartId'].toString(), asInt(args['quantity'], 1));
       case 'resolution':
         JobPatch.resolution(payload, type: args['resolutionType'].toString(), productId: args['productId']?.toString(), serial: args['serialNumber']?.toString());
@@ -369,6 +370,13 @@ class TechRepository extends ChangeNotifier {
         return _api.post('$base/estimates', body: {'lines': a['lines'], 'note': a['note'], 'send': a['send'] == true});
       case 'partOrder':
         return _api.post('$base/part-orders', body: {'sparePartId': a['sparePartId'], 'quantity': a['quantity']});
+      case 'partRequest':
+        return _api.post('$base/part-requests', body: {
+          'sparePartId': a['sparePartId'],
+          'quantity': a['quantity'],
+          if (a['note'] != null) 'note': a['note'],
+          if (a['source'] != null) 'source': a['source'],
+        });
       case 'resolution':
         return _api.put('$base/resolution', body: {
           'resolutionType': a['resolutionType'],

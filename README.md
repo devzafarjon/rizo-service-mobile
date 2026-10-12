@@ -93,3 +93,13 @@ cd ../rizo_customer && flutter analyze && flutter test
   `flutter build apk --debug --dart-define=API_URL=http://10.0.2.2:4000`. Tested: the technician/admin app on an Android 17 emulator.
 * **Store texts** (uz / ru / en) and the review checklist are in `STORE.md`. The push notification plan is in
   `PUSH_NOTIFICATIONS.md`.
+
+## Spare-part control (RIZO Texnik)
+
+Admin, front desk and warehouse see the same four views as the website's `/app/part-orders`: what to order (grouped by supplier, with a message to copy), jobs waiting for parts, orders (receive all or part), suppliers (admin and warehouse edit). Admin: More → Spare parts, and the tiles on the dashboard open it. Warehouse: it is the first screen. The customer app shows a banner on a request that waits for a part (ordered or not, expected date). Code: `apps/rizo_staff/lib/parts/`, models in `packages/rizo_core/lib/src/models.dart`.
+
+## Warehouses (RIZO Texnik)
+
+The warehouse role's first screen is **Warehouses** (admin and front desk: More → Warehouses). Pick a warehouse (a keeper tied to one warehouse sees only that one) and work through the tabs: **Requests** (technicians' and branch admins' requests to send: send all or part, promise a date, or refuse with a reason), **Incoming** (parts on the way: confirm what arrived; ask for a part), **Stock** (count a shelf, set its minimum, ask for more), **Restock** (everything below its minimum with the quickest source for each; one tap sends the requests), **History**, and for the admin **Warehouses** (add / edit / switch off, link to a service centre). More → Technician stock gives parts to technicians and takes them back (admin and warehouse).
+
+The technician's job screen shows, for a part the shelf lacks, **where it is and what arrives soonest** (warehouses by delivery days, and the supplier); the fastest is preselected and any can be chosen (offline: the request is queued and the server picks the fastest). Requests for the job and their state (requested, sent, refused) are listed under the job's orders. "My stock" asks a warehouse to top up the van and confirms what arrives. Code: `apps/rizo_staff/lib/warehouse/`, `apps/rizo_staff/lib/tech/part_request_sheet.dart`, models (`Warehouse`, `StockTransfer`, `SourceOption`, …) in `packages/rizo_core/lib/src/models.dart`. The wording is in the shared `warehouse.*` keys (merge new website keys into `packages/rizo_core/assets/locales/*.json` with a script, not with `tool/sync_assets.sh`, while the other branch's `auto.*` keys exist).

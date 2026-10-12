@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
+import '../parts/parts_screen.dart';
+
 /// Key numbers for the chosen period, with the change against the period before.
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.bell});
@@ -76,7 +78,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _Kpi(context.tr('dashboard.callbackCost'), formatMoney(asDouble(d.service['callbackCost'])), null, bad: asDouble(d.service['callbackCost']) > 0),
                 _Kpi(context.tr('dashboard.partsWait'), formatDurationHours(d.service['avgPartsWaitHours'] is num ? (d.service['avgPartsWaitHours'] as num).toDouble() : null), null),
               ];
-              return GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: cols == 2 ? 1.4 : 1.55, children: cards);
+              final parts = d.parts;
+              void openParts(int tab) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PartsControlScreen(initialTab: tab)));
+              final partCards = parts == null
+                  ? <Widget>[]
+                  : [
+                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(1), child: _Kpi(context.tr('parts.stat.waiting'), formatNumber(parts.waitingRequests), null)),
+                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(1), child: _Kpi(context.tr('parts.stat.noOrder'), formatNumber(parts.noOrder), null, bad: parts.noOrder > 0)),
+                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(2), child: _Kpi(context.tr('parts.stat.late'), formatNumber(parts.lateOrders), null, bad: parts.lateOrders > 0)),
+                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(0), child: _Kpi(context.tr('parts.stat.toOrder'), formatNumber(parts.toOrder), null, bad: parts.toOrder > 0)),
+                    ];
+              final ratio = cols == 2 ? 1.4 : 1.55;
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ratio, children: cards),
+                if (partCards.isNotEmpty) ...[
+                  Padding(padding: const EdgeInsets.fromLTRB(2, 16, 2, 8), child: Text(context.tr('dashboard.partsTitle').toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.muted))),
+                  GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ratio, children: partCards),
+                ],
+              ]);
             }),
             const SizedBox(height: 12),
             Section(

@@ -400,12 +400,151 @@ void _growthTests() {
     expect(r.etaMinutes, 20);
   });
 
-  test('only technicians, the front desk and admins use the app', () {
+  test('everyone but the accountant uses the app', () {
     StaffUser user(String role) => StaffUser.fromJson({'id': '1', 'name': 'x', 'phone': '1', 'role': role});
     expect(user('technician').usesApp, isTrue);
     expect(user('admin').usesApp, isTrue);
     expect(user('receptionist').usesApp, isTrue);
     expect(user('accountant').usesApp, isFalse);
-    expect(user('warehouse').usesApp, isFalse);
+    expect(user('warehouse').usesApp, isTrue);
+  });
+
+  group('spare-part control models', () {
+    test('a waiting job with its parts, orders and the "nothing ordered" flag', () {
+      final r = WaitingRequest({
+        'id': 'r1',
+        'displayId': '121026010004',
+        'status': 'awaiting_parts',
+        'customer': {'id': 'c', 'name': 'Dilnoza', 'phone': '998900000003'},
+        'product': {'name': 'Fridge', 'nameUz': 'Muzlatkich'},
+        'technician': {'id': 't', 'name': 'Bekzod'},
+        'waitingDays': 4,
+        'isOverdue': true,
+        'noOrder': true,
+        'late': false,
+        'expectedAt': '2026-10-15',
+        'items': [
+          {
+            'part': {'id': 'p1', 'name': 'Compressor', 'nameUz': 'Kompressor'},
+            'needed': 2,
+            'inStock': 1,
+            'ordered': 0,
+            'uncovered': 2,
+            'gap': 1,
+            'orders': [
+              {'status': 'ordered', 'quantity': 2, 'supplier': 'Texno', 'expectedAt': '2026-10-15', 'late': true},
+            ],
+          },
+        ],
+      });
+      expect(r.noOrder && r.isOverdue, isTrue);
+      expect(r.technicianName, 'Bekzod');
+      expect(r.product.localized('uz'), 'Muzlatkich');
+      expect(r.items.single.needsOrder, isTrue);
+      expect(r.items.single.orders.single.late, isTrue);
+      // Covered by a general stock order: nothing to order for this job.
+      expect(WaitingItem({'part': {'id': 'p', 'name': 'x'}, 'needed': 2, 'uncovered': 2, 'gap': 0}).needsOrder, isFalse);
+    });
+
+    test('recommendations, the overview and a late order parse; a missing supplier is null', () {
+      final group = RecommendationGroup({
+        'supplier': null,
+        'items': [
+          {'part': {'id': 'p', 'name': 'Thermostat'}, 'stockQuantity': 2, 'lowStockThreshold': 4, 'onOrder': 0, 'waitingRequests': 1, 'uncovered': 3, 'avgDaily': 0.5, 'daysCover': 4, 'reasons': ['waiting', 'low'], 'recommended': 6},
+        ],
+      });
+      expect(group.supplier, isNull);
+      expect(group.items.single.reasons, ['waiting', 'low']);
+      expect(group.items.single.daysCover, 4);
+      expect(group.items.single.recommended, 6);
+      final overview = PartsOverview({'waitingRequests': 3, 'noOrder': 1, 'lateOrders': 2, 'openOrders': 5, 'lowStock': 4, 'toOrder': 6});
+      expect(overview.noOrder + overview.lateOrders, 3);
+      final order = PartOrderRow({'id': 'o', 'quantity': 3, 'status': 'ordered', 'supplier': 'Texno', 'supplierId': 's', 'expectedAt': '2026-10-10', 'late': true, 'part': {'id': 'p', 'name': 'x', 'stockQuantity': 0}, 'request': null});
+      expect(order.isOpen && order.late, isTrue);
+      expect(order.requestDisplayId, isNull);
+      final supplier = SupplierInfo({'id': 's', 'name': 'Texno', 'leadTimeDays': 5, 'isActive': true, 'partsCount': 2, 'ordersCount': 1});
+      expect(supplier.leadTimeDays, 5);
+    });
+
+    test('the warehouse uses the app and spare-part control; accountants do not use the app', () {
+      StaffUser user(String role) => StaffUser.fromJson({'id': 'u', 'name': 'x', 'phone': '1', 'role': role});
+      expect(user('warehouse').usesApp && user('warehouse').usesParts && user('warehouse').editsSuppliers, isTrue);
+      expect(user('receptionist').usesParts && !user('receptionist').editsSuppliers, isTrue);
+      expect(user('admin').usesParts && user('admin').editsSuppliers, isTrue);
+      expect(user('technician').usesParts, isFalse);
+      expect(user('accountant').usesApp, isFalse);
+    });
+
+    test('the dashboard exposes the parts overview', () {
+      final data = DashboardData({'totals': {}, 'service': {}, 'parts': {'waitingRequests': 2, 'noOrder': 1, 'lateOrders': 0, 'openOrders': 3, 'lowStock': 1, 'toOrder': 2}, 'byStatus': [], 'topProducts': [], 'warrantySplit': {}});
+      expect(data.parts?.waitingRequests, 2);
+      expect(DashboardData({'totals': {}, 'service': {}, 'byStatus': [], 'topProducts': [], 'warrantySplit': {}}).parts, isNull);
+    });
+  });
+  group('warehouse models', () {
+    test('a transfer, its destination and state', () {
+      final t = StockTransfer({
+        'id': 't', 'status': 'shipped', 'quantity': 3, 'part': {'id': 'p', 'name': 'Gasket', 'nameUz': 'Qistirma'},
+        'from': {'id': 'w1', 'name': 'Samarqand', 'kind': 'regional'}, 'to': {'id': 'w2', 'name': 'Chilonzor', 'kind': 'branch'}, 'toTechnician': null,
+        'request': {'id': 'r', 'displayId': '121026010001', 'status': 'awaiting_parts'}, 'etaAt': '2026-10-12', 'late': true, 'note': null, 'rejectionReason': null,
+        'requestedBy': {'id': 'u', 'name': 'Nigora', 'role': 'receptionist'}, 'createdAt': '2026-10-10T08:00:00.000Z',
+      });
+      expect(t.isOpen && t.late, isTrue);
+      expect(t.destination, 'Chilonzor');
+      expect(t.part.localized('uz'), 'Qistirma');
+      final van = StockTransfer({'id': 'v', 'status': 'requested', 'quantity': 1, 'part': {'id': 'p', 'name': 'x'}, 'from': {'id': 'w', 'name': 'Central'}, 'to': null, 'toTechnician': {'id': 'u', 'name': 'Aziz'}, 'requestedBy': {}});
+      expect(van.destination, 'Aziz');
+      expect(StockTransfer({'id': 'x', 'status': 'rejected', 'quantity': 1, 'part': {}, 'from': {}, 'requestedBy': {}}).isOpen, isFalse);
+    });
+
+    test('a source option: only a warehouse that holds enough can be chosen; the supplier always can', () {
+      final warehouse = SourceOption({'type': 'warehouse', 'warehouse': {'id': 'w', 'name': 'Buxoro', 'kind': 'regional', 'regionCode': '80'}, 'available': 1, 'enough': false, 'etaDays': 3, 'etaDate': '2026-10-15', 'recommended': false});
+      final full = SourceOption({'type': 'warehouse', 'warehouse': {'id': 'w2', 'name': 'Chilonzor', 'kind': 'branch', 'regionCode': '01'}, 'available': 5, 'enough': true, 'etaDays': 0, 'etaDate': '2026-10-12', 'recommended': true});
+      final supplier = SourceOption({'type': 'supplier', 'supplier': {'id': 's', 'name': 'Texno'}, 'etaDays': 5, 'etaDate': '2026-10-17', 'recommended': false});
+      expect(warehouse.selectable, isFalse);
+      expect(full.selectable && full.recommended && full.key == 'wh:w2', isTrue);
+      expect(supplier.selectable && supplier.isSupplier && supplier.key == 'supplier' && supplier.supplierName == 'Texno', isTrue);
+    });
+
+    test('a warehouse, its shelf line and a restock suggestion', () {
+      final w = Warehouse({'id': 'w', 'name': 'Central', 'kind': 'central', 'regionCode': '01', 'units': 78, 'parts': 9, 'toSend': 2, 'arriving': 1, 'low': 3, 'keepers': [{'id': 'k', 'name': 'Rustam'}], 'isActive': true});
+      expect(w.isCentral && w.units == 78 && w.keepers.single == 'Rustam' && w.leadDaysOtherRegion == 3, isTrue);
+      final item = WarehouseStockItem({'part': {'id': 'p', 'name': 'Cable'}, 'quantity': 1, 'minQuantity': null, 'effectiveMin': 2, 'low': true, 'onOrder': 1, 'incoming': 0, 'requestedFromHere': 0});
+      expect(item.low && item.minQuantity == null && item.effectiveMin == 2, isTrue);
+      final s = RestockSuggestion({'part': {'id': 'p', 'name': 'Cable'}, 'quantity': 1, 'low': true, 'recommended': 3, 'options': [{'type': 'supplier', 'etaDays': 3, 'etaDate': '2026-10-15', 'recommended': true}]});
+      expect(s.recommended, 3);
+      expect(s.options.single.recommended, isTrue);
+      final move = WarehouseMovement({'id': 'm', 'kind': 'transfer_out', 'quantity': -2, 'part': {'id': 'p', 'name': 'Cable'}, 'createdAt': '2026-10-10T08:00:00.000Z'});
+      expect(move.quantity, -2);
+    });
+
+    test('a job knows its transfers, and the part on the job comes from the shelf of the warehouse that serves it', () {
+      final raw = _job();
+      (raw['catalog'] as Map)['parts'] = [
+        {'id': 'pt1', 'name': 'Cable', 'price': 20000, 'stockQuantity': 40, 'homeStock': 0, 'carried': 0},
+        {'id': 'pt2', 'name': 'Fan', 'price': 30000, 'stockQuantity': 40, 'homeStock': 3, 'carried': 1},
+      ];
+      raw['partTransfers'] = [
+        {'id': 't', 'status': 'requested', 'quantity': 1, 'part': {'id': 'pt1', 'name': 'Cable'}, 'from': {'id': 'w', 'name': 'Central'}, 'to': {'id': 'h', 'name': 'Chilonzor'}, 'requestedBy': {}}
+      ];
+      final work = JobWork(raw);
+      expect(work.partTransfers.single.fromName, 'Central');
+      expect(work.catalogParts[0].available, 0);
+      expect(work.catalogParts[1].available, 4);
+      expect(work.catalogParts[1].shelf, 3);
+      // Without a home stock the total is used (an older server).
+      expect(CatalogChoice({'id': 'x', 'name': 'x', 'price': 1, 'stockQuantity': 5}).available, 5);
+    });
+
+    test('a part taken on a job lowers the shelf of the serving warehouse too (offline)', () {
+      final raw = JobPatch.clone(_job());
+      (raw['catalog'] as Map)['parts'] = [
+        {'id': 'pt1', 'name': 'Cable', 'price': 20000, 'stockQuantity': 40, 'homeStock': 3, 'carried': 0},
+      ];
+      JobPatch.addPart(raw, 'op1', 'pt1', 2);
+      final part = asList(asMap(raw['catalog'])['parts']).single as Map;
+      expect(part['homeStock'], 1);
+      expect(part['stockQuantity'], 38);
+    });
   });
 }

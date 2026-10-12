@@ -54,9 +54,16 @@ class StaffUser {
   bool get isTechnician => role == 'technician';
   bool get isAdmin => role == 'admin';
   bool get isReceptionist => role == 'receptionist';
+  bool get isWarehouse => role == 'warehouse';
 
-  /// Accountants and warehouse managers work on the website; the app is for technicians, the front desk and admins.
-  bool get usesApp => isTechnician || isAdmin || isReceptionist;
+  /// Accountants work on the website; the app is for technicians, the front desk, admins and the warehouse.
+  bool get usesApp => isTechnician || isAdmin || isReceptionist || isWarehouse;
+
+  /// Spare-part control (jobs waiting for parts, orders, suppliers).
+  bool get usesParts => isAdmin || isReceptionist || isWarehouse;
+
+  /// Suppliers are edited by the admin and the warehouse.
+  bool get editsSuppliers => isAdmin || isWarehouse;
 }
 
 class CustomerUser {
@@ -372,6 +379,7 @@ class CatalogChoice {
         names = Named.fromJson(m),
         price = _dbl(m['price']),
         stockQuantity = m['stockQuantity'] is num ? (m['stockQuantity'] as num).toInt() : null,
+        homeStock = m['homeStock'] is num ? (m['homeStock'] as num).toInt() : null,
         carried = _int(m['carried']),
         lowStock = _bool(m['lowStock']);
   final String id;
@@ -379,12 +387,18 @@ class CatalogChoice {
   final double price;
   final int? stockQuantity;
 
+  /// What is on the shelf of the warehouse that serves the job (the total over all warehouses is [stockQuantity]).
+  final int? homeStock;
+
   /// How many the technician carries (van stock); used before the warehouse stock.
   final int carried;
   final bool lowStock;
 
   /// What can be used on a job right now.
-  int get available => (stockQuantity ?? 0) + carried;
+  int get available => (homeStock ?? stockQuantity ?? 0) + carried;
+
+  /// Shown on the job screen: the shelf the job takes from.
+  int get shelf => homeStock ?? stockQuantity ?? 0;
 }
 
 class DefectCode {
@@ -408,6 +422,7 @@ class JobWork {
         estimates = _list(raw['estimates']).map(Estimate.new).toList(),
         defectCodes = _list(raw['defectCodes']).map(DefectCode.new).toList(),
         partOrders = _list(raw['partOrders']),
+        partTransfers = _list(raw['partTransfers']).map(StockTransfer.new).toList(),
         notes = _list(raw['notes']).map(NoteRow.new).toList(),
         timeline = _list(raw['timeline']).map(TimelineEvent.new).toList(),
         cost = _map(raw['cost']),
@@ -431,6 +446,7 @@ class JobWork {
   final List<Estimate> estimates;
   final List<DefectCode> defectCodes;
   final List<Json> partOrders;
+  final List<StockTransfer> partTransfers;
   final List<NoteRow> notes;
   final List<TimelineEvent> timeline;
   final Json cost;
@@ -601,6 +617,20 @@ class JobChecklist {
 }
 
 /// A request as the customer sees it.
+/// What a customer waiting for a spare part is told: whether it is ordered and when it should arrive.
+class PartWait {
+  PartWait(Json m)
+      : ordered = _bool(m['ordered']),
+        expectedAt = _s(m['expectedAt']),
+        late = _bool(m['late']);
+  static PartWait? from(Object? json) => json is Map ? PartWait(_map(json)) : null;
+  final bool ordered;
+
+  /// yyyy-mm-dd
+  final String? expectedAt;
+  final bool late;
+}
+
 class PortalRequest {
   PortalRequest(this.raw)
       : id = _str(raw['id']),
@@ -625,6 +655,7 @@ class PortalRequest {
         enRouteAt = _dt(raw['enRouteAt']),
         visit = VisitInfo(_map(raw['visit'])),
         etaMinutes = raw['eta'] is Map ? _int((raw['eta'] as Map)['minutes']) : null,
+        partWait = PartWait.from(raw['partWait']),
         dueBy = _dt(raw['dueBy']),
         repairWarrantyUntil = _s(raw['repairWarrantyUntil']),
         rejectionReason = _s(raw['rejectionReason']),
@@ -660,6 +691,7 @@ class PortalRequest {
   final DateTime? enRouteAt;
   final VisitInfo visit;
   final int? etaMinutes;
+  final PartWait? partWait;
   final DateTime? dueBy;
   final String? repairWarrantyUntil;
   final String? rejectionReason;
@@ -737,20 +769,176 @@ class PartOrderRow {
         quantity = _int(m['quantity'], 1),
         status = _str(m['status'], 'requested'),
         supplier = _s(m['supplier']),
+        supplierId = _s(m['supplierId']),
         part = Named.fromJson(m['part']),
+        partId = _str(_map(m['part'])['id']),
         stock = _int(_map(m['part'])['stockQuantity']),
         requestDisplayId = m['request'] is Map ? _s((m['request'] as Map)['displayId']) : null,
         requestId = m['request'] is Map ? _s((m['request'] as Map)['id']) : null,
+        expectedAt = _s(m['expectedAt']),
+        late = _bool(m['late']),
         createdAt = _dt(m['createdAt']);
   final String id;
   final int quantity;
   final String status;
   final String? supplier;
+  final String? supplierId;
   final Named part;
+  final String partId;
   final int stock;
   final String? requestDisplayId;
   final String? requestId;
+
+  /// yyyy-mm-dd
+  final String? expectedAt;
+  final bool late;
   final DateTime? createdAt;
+  bool get isOpen => status == 'requested' || status == 'ordered';
+}
+
+/// Who spare parts are bought from; the delivery time gives every order its expected date.
+class SupplierInfo {
+  SupplierInfo(Json m)
+      : id = _str(m['id']),
+        name = _str(m['name']),
+        phone = _s(m['phone']),
+        telegram = _s(m['telegram']),
+        note = _s(m['note']),
+        leadTimeDays = _int(m['leadTimeDays'], 3),
+        isActive = _bool(m['isActive'], true),
+        partsCount = _int(m['partsCount']),
+        ordersCount = _int(m['ordersCount']);
+  final String id;
+  final String name;
+  final String? phone;
+  final String? telegram;
+  final String? note;
+  final int leadTimeDays;
+  final bool isActive;
+  final int partsCount;
+  final int ordersCount;
+}
+
+/// The numbers at the top of the spare-part control and the dashboard.
+class PartsOverview {
+  PartsOverview(Json m)
+      : waitingRequests = _int(m['waitingRequests']),
+        noOrder = _int(m['noOrder']),
+        lateOrders = _int(m['lateOrders']),
+        openOrders = _int(m['openOrders']),
+        lowStock = _int(m['lowStock']),
+        toOrder = _int(m['toOrder']);
+  final int waitingRequests;
+  final int noOrder;
+  final int lateOrders;
+  final int openOrders;
+  final int lowStock;
+  final int toOrder;
+}
+
+class WaitingOrder {
+  WaitingOrder(Json m)
+      : status = _str(m['status'], 'requested'),
+        quantity = _int(m['quantity'], 1),
+        supplier = _s(m['supplier']),
+        expectedAt = _s(m['expectedAt']),
+        late = _bool(m['late']);
+  final String status;
+  final int quantity;
+  final String? supplier;
+  final String? expectedAt;
+  final bool late;
+}
+
+class WaitingItem {
+  WaitingItem(Json m)
+      : part = Named.fromJson(m['part']),
+        partId = _str(_map(m['part'])['id']),
+        needed = _int(m['needed']),
+        inStock = _int(m['inStock']),
+        ordered = _int(m['ordered']),
+        uncovered = _int(m['uncovered']),
+        gap = _int(m['gap']),
+        orders = _list(m['orders']).map(WaitingOrder.new).toList();
+  final Named part;
+  final String partId;
+  final int needed;
+  final int inStock;
+  final int ordered;
+  final int uncovered;
+  final int gap;
+  final List<WaitingOrder> orders;
+
+  /// A part is missing for this job and nothing (not even a general stock order) covers it.
+  bool get needsOrder => uncovered > 0 && gap > 0;
+}
+
+/// A job held up by a spare part.
+class WaitingRequest {
+  WaitingRequest(Json m)
+      : id = _str(m['id']),
+        displayId = _str(m['displayId']),
+        status = _str(m['status']),
+        customerName = _str(_map(m['customer'])['name']),
+        customerPhone = _str(_map(m['customer'])['phone']),
+        product = Named.fromJson(m['product']),
+        technicianName = _s(_map(m['technician'])['name']),
+        waitingDays = _int(m['waitingDays']),
+        isOverdue = _bool(m['isOverdue']),
+        noOrder = _bool(m['noOrder']),
+        late = _bool(m['late']),
+        expectedAt = _s(m['expectedAt']),
+        items = _list(m['items']).map(WaitingItem.new).toList();
+  final String id;
+  final String displayId;
+  final String status;
+  final String customerName;
+  final String customerPhone;
+  final Named product;
+  final String? technicianName;
+  final int waitingDays;
+  final bool isOverdue;
+  final bool noOrder;
+  final bool late;
+  final String? expectedAt;
+  final List<WaitingItem> items;
+}
+
+class RecommendationItem {
+  RecommendationItem(Json m)
+      : part = Named.fromJson(m['part']),
+        partId = _str(_map(m['part'])['id']),
+        stockQuantity = _int(m['stockQuantity']),
+        lowStockThreshold = _int(m['lowStockThreshold']),
+        onOrder = _int(m['onOrder']),
+        waitingRequests = _int(m['waitingRequests']),
+        uncovered = _int(m['uncovered']),
+        avgDaily = _dbl(m['avgDaily']),
+        daysCover = m['daysCover'] is num ? (m['daysCover'] as num).toInt() : null,
+        reasons = (m['reasons'] is List ? (m['reasons'] as List).map((e) => e.toString()).toList() : <String>[]),
+        recommended = _int(m['recommended'], 1);
+  final Named part;
+  final String partId;
+  final int stockQuantity;
+  final int lowStockThreshold;
+  final int onOrder;
+  final int waitingRequests;
+  final int uncovered;
+  final double avgDaily;
+  final int? daysCover;
+
+  /// waiting | low | forecast
+  final List<String> reasons;
+  final int recommended;
+}
+
+/// Suggested orders for one supplier (or for parts that have none).
+class RecommendationGroup {
+  RecommendationGroup(Json m)
+      : supplier = m['supplier'] is Map ? SupplierInfo(_map(m['supplier'])) : null,
+        items = _list(m['items']).map(RecommendationItem.new).toList();
+  final SupplierInfo? supplier;
+  final List<RecommendationItem> items;
 }
 
 class DashboardData {
@@ -758,6 +946,7 @@ class DashboardData {
       : totals = _map(raw['totals']),
         previous = raw['previous'] is Map ? _map(raw['previous']) : null,
         service = _map(raw['service']),
+        parts = raw['parts'] is Map ? PartsOverview(_map(raw['parts'])) : null,
         byStatus = _list(raw['byStatus']),
         topProducts = _list(raw['topProducts']),
         warrantySplit = _map(raw['warrantySplit']);
@@ -766,6 +955,9 @@ class DashboardData {
 
   /// First-time fix, callbacks, callback cost and waiting times (see ServiceKpis on the website).
   final Json service;
+
+  /// Jobs waiting for parts, orders that are late, parts to order.
+  final PartsOverview? parts;
   final Json? previous;
   final List<Json> byStatus;
   final List<Json> topProducts;
@@ -781,3 +973,192 @@ String asString(Object? v, [String d = '']) => _str(v, d);
 double asDouble(Object? v, [double d = 0]) => _dbl(v, d);
 int asInt(Object? v, [int d = 0]) => _int(v, d);
 DateTime? asDate(Object? v) => _dt(v);
+
+// ---- warehouses -------------------------------------------------------------------------------------------------------
+
+/// One warehouse of the network: the central one, a regional one or a branch's stock room.
+class Warehouse {
+  Warehouse(Json m)
+      : id = _str(m['id']),
+        name = _str(m['name']),
+        kind = _str(m['kind'], 'regional'),
+        regionCode = _str(m['regionCode'], '00'),
+        address = _s(m['address']),
+        phone = _s(m['phone']),
+        serviceCenterId = _s(m['serviceCenterId']),
+        serviceCenterName = _s(m['serviceCenterName']),
+        leadDaysSameRegion = _int(m['leadDaysSameRegion'], 1),
+        leadDaysOtherRegion = _int(m['leadDaysOtherRegion'], 3),
+        note = _s(m['note']),
+        isActive = _bool(m['isActive'], true),
+        units = _int(m['units']),
+        parts = _int(m['parts']),
+        toSend = _int(m['toSend']),
+        arriving = _int(m['arriving']),
+        low = _int(m['low']),
+        keepers = _list(m['keepers']).map((e) => _str(e['name'])).toList();
+  final String id;
+  final String name;
+
+  /// central | regional | branch
+  final String kind;
+  final String regionCode;
+  final String? address;
+  final String? phone;
+  final String? serviceCenterId;
+  final String? serviceCenterName;
+  final int leadDaysSameRegion;
+  final int leadDaysOtherRegion;
+  final String? note;
+  final bool isActive;
+  final int units;
+  final int parts;
+  final int toSend;
+  final int arriving;
+  final int low;
+  final List<String> keepers;
+  bool get isCentral => kind == 'central';
+}
+
+/// One part on one warehouse's shelf.
+class WarehouseStockItem {
+  WarehouseStockItem(Json m)
+      : part = Named.fromJson(_map(m['part'])),
+        partId = _str(_map(m['part'])['id']),
+        quantity = _int(m['quantity']),
+        minQuantity = m['minQuantity'] is num ? (m['minQuantity'] as num).toInt() : null,
+        effectiveMin = m['effectiveMin'] is num ? (m['effectiveMin'] as num).toInt() : null,
+        low = _bool(m['low']),
+        onOrder = _int(m['onOrder']),
+        incoming = _int(m['incoming']),
+        requestedFromHere = _int(m['requestedFromHere']);
+  final Named part;
+  final String partId;
+  final int quantity;
+  final int? minQuantity;
+  final int? effectiveMin;
+  final bool low;
+  final int onOrder;
+  final int incoming;
+  final int requestedFromHere;
+}
+
+/// A place a part can come from: a warehouse that holds it, or the supplier.
+class SourceOption {
+  SourceOption(Json m)
+      : isSupplier = _str(m['type']) == 'supplier',
+        warehouseId = _str(_map(m['warehouse'])['id']),
+        warehouseName = _str(_map(m['warehouse'])['name']),
+        warehouseKind = _str(_map(m['warehouse'])['kind'], 'regional'),
+        regionCode = _str(_map(m['warehouse'])['regionCode'], '00'),
+        supplierName = _s(_map(m['supplier'])['name']),
+        available = _int(m['available']),
+        enough = _bool(m['enough']),
+        etaDays = _int(m['etaDays']),
+        etaDate = _str(m['etaDate']),
+        recommended = _bool(m['recommended']);
+  final bool isSupplier;
+  final String warehouseId;
+  final String warehouseName;
+  final String warehouseKind;
+  final String regionCode;
+  final String? supplierName;
+  final int available;
+  final bool enough;
+  final int etaDays;
+
+  /// yyyy-mm-dd
+  final String etaDate;
+  final bool recommended;
+
+  /// The key a picker uses to tell the options apart.
+  String get key => isSupplier ? 'supplier' : 'wh:$warehouseId';
+
+  /// A warehouse that holds too few cannot be chosen.
+  bool get selectable => isSupplier || enough;
+}
+
+/// A part asked from one warehouse for another warehouse (or a technician's van): requested, sent, received, refused.
+class StockTransfer {
+  StockTransfer(Json m)
+      : id = _str(m['id']),
+        status = _str(m['status'], 'requested'),
+        quantity = _int(m['quantity'], 1),
+        part = Named.fromJson(_map(m['part'])),
+        partId = _str(_map(m['part'])['id']),
+        fromId = _str(_map(m['from'])['id']),
+        fromName = _str(_map(m['from'])['name']),
+        toId = m['to'] is Map ? _s((m['to'] as Map)['id']) : null,
+        toName = m['to'] is Map ? _s((m['to'] as Map)['name']) : null,
+        technicianName = m['toTechnician'] is Map ? _s((m['toTechnician'] as Map)['name']) : null,
+        requestId = m['request'] is Map ? _s((m['request'] as Map)['id']) : null,
+        requestDisplayId = m['request'] is Map ? _s((m['request'] as Map)['displayId']) : null,
+        etaAt = _s(m['etaAt']),
+        late = _bool(m['late']),
+        note = _s(m['note']),
+        rejectionReason = _s(m['rejectionReason']),
+        requestedById = _s(_map(m['requestedBy'])['id']),
+        requestedByName = _s(_map(m['requestedBy'])['name']),
+        requestedByRole = _s(_map(m['requestedBy'])['role']),
+        createdAt = _dt(m['createdAt']);
+  final String id;
+
+  /// requested | shipped | received | rejected | cancelled
+  final String status;
+  final int quantity;
+  final Named part;
+  final String partId;
+  final String fromId;
+  final String fromName;
+  final String? toId;
+  final String? toName;
+  final String? technicianName;
+  final String? requestId;
+  final String? requestDisplayId;
+
+  /// yyyy-mm-dd
+  final String? etaAt;
+  final bool late;
+  final String? note;
+  final String? rejectionReason;
+  final String? requestedById;
+  final String? requestedByName;
+  final String? requestedByRole;
+  final DateTime? createdAt;
+
+  /// Where it goes: a warehouse or a technician's van.
+  String get destination => toName ?? technicianName ?? '';
+  bool get isOpen => status == 'requested' || status == 'shipped';
+}
+
+/// A line of a warehouse's history: a receipt, a send, a count, a part used on a job, a part given to a technician.
+class WarehouseMovement {
+  WarehouseMovement(Json m)
+      : id = _str(m['id']),
+        kind = _str(m['kind']),
+        quantity = _int(m['quantity']),
+        part = m['part'] is Map ? Named.fromJson(m['part']) : null,
+        technicianName = _s(m['technicianName']),
+        note = _s(m['note']),
+        createdByName = _s(m['createdByName']),
+        createdAt = _dt(m['createdAt']);
+  final String id;
+  final String kind;
+  final int quantity;
+  final Named? part;
+  final String? technicianName;
+  final String? note;
+  final String? createdByName;
+  final DateTime? createdAt;
+}
+
+/// A part below its minimum with the quickest places to get it.
+class RestockSuggestion {
+  RestockSuggestion(Json m)
+      : item = WarehouseStockItem(m),
+        recommended = _int(m['recommended'], 1),
+        options = _list(m['options']).map(SourceOption.new).toList();
+  final WarehouseStockItem item;
+  final int recommended;
+  final List<SourceOption> options;
+}
