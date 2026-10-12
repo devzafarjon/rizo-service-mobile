@@ -114,13 +114,11 @@ void main() {
       asList(asMap(await api.get('/api/public/centers'))['centers']);
     }, skip: !_live);
 
-    test('visit slots and warranty plans parse', () async {
+    test('visit slots parse', () async {
       final date = DateTime.now().add(const Duration(days: 2));
       final day = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final slots = asList(asMap(await api.get('/api/customer/visit-slots', query: {'date': day}))['slots']).map(VisitSlot.new).toList();
       expect(slots, isNotEmpty);
-      final sale = asList(asMap(await api.get('/api/customer/sales'))['sales']).first;
-      asList(asMap(await api.get('/api/customer/warranty-plans', query: {'saleId': sale['id']}))['plans']).map(WarrantyPlanInfo.new).toList();
     }, skip: !_live);
 
     test('a finished job can be rated and the rating shows on the request', () async {

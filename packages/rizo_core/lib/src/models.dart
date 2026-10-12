@@ -545,19 +545,6 @@ class VisitInfo {
   final bool canCancel;
 }
 
-/// Paid warranty extension on offer ("+12 months").
-class WarrantyPlanInfo {
-  WarrantyPlanInfo(Json m)
-      : id = _str(m['id']),
-        names = Named.fromJson(m),
-        months = _int(m['months']),
-        price = _dbl(m['price']);
-  final String id;
-  final Named names;
-  final int months;
-  final double price;
-}
-
 /// A self-help guide.
 class HelpArticleInfo {
   HelpArticleInfo(Json m)

@@ -4,7 +4,7 @@ import 'package:rizo_core/rizo_core.dart';
 import 'new_request_screen.dart';
 import 'register_product_screen.dart';
 
-/// The customer's products: warranty countdown, booking service and paid warranty extensions.
+/// The customer's products: warranty countdown and booking service.
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
   @override
@@ -32,61 +32,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
       if (mounted) setState(() => error = e);
     } finally {
       if (mounted) setState(() => loading = false);
-    }
-  }
-
-  Future<void> _extend(PortalSale sale) async {
-    final locale = Translator.I.locale;
-    Json data;
-    try {
-      data = asMap(await _api.get('/api/customer/warranty-plans', query: {'saleId': sale.id}));
-    } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
-      return;
-    }
-    if (!mounted) return;
-    final plans = asList(data['plans']).map(WarrantyPlanInfo.new).toList();
-    final requestedId = data['requestedPlanId']?.toString();
-    final chosen = await showModalBottomSheet<String>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(sheet.tr('products.extendTitle'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 8),
-            if (plans.isEmpty)
-              Text(sheet.tr('products.noPlans'), style: TextStyle(color: Brand.muted))
-            else ...[
-              Text(sheet.tr('products.extendBody'), style: TextStyle(color: Brand.muted)),
-              const SizedBox(height: 12),
-              for (final plan in plans)
-                Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    title: Text(plan.names.localized(locale), style: const TextStyle(fontWeight: FontWeight.w800)),
-                    subtitle: Text(formatMoney(plan.price)),
-                    trailing: FilledButton(
-                      style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
-                      onPressed: requestedId != null ? null : () => Navigator.of(sheet).pop(plan.id),
-                      child: Text(requestedId == plan.id ? sheet.tr('products.asked') : sheet.tr('products.ask')),
-                    ),
-                  ),
-                ),
-              Text(sheet.tr('products.payAtService'), style: TextStyle(color: Brand.muted, fontSize: 12)),
-            ],
-          ]),
-        ),
-      ),
-    );
-    if (chosen == null || !mounted) return;
-    final asked = context.tr('plans.requested');
-    try {
-      await _api.post('/api/customer/sales/${sale.id}/warranty-plan', body: {'planId': chosen});
-      if (mounted) showSnack(context, asked);
-    } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
     }
   }
 
@@ -147,7 +92,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
               onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => NewRequestScreen(initialSaleId: sale.id))),
               child: Text(context.tr('products.bookService')),
             ),
-            OutlinedButton.icon(style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: () => _extend(sale), icon: const Icon(Icons.verified_user_outlined), label: Text(context.tr('products.extend'))),
           ]),
         ]),
       ),
