@@ -16,7 +16,10 @@ Future<List<DirModel>> loadModels(BuildContext context, {String? brandId, String
   return asList(asMap(r)['models']).map((m) => DirModel(asMap(m))).toList();
 }
 
-Future<List<String>> loadCategories(BuildContext context) async => asList(asMap(await _api(context).get('/api/staff/directory/categories'))['categories']).map((e) => e.toString()).toList();
+Future<List<String>> loadCategories(BuildContext context) async {
+  final raw = asMap(await _api(context).get('/api/staff/directory/categories'))['categories'];
+  return raw is List ? raw.map((e) => e.toString()).toList() : <String>[];
+}
 
 List<Map<String, dynamic>> _similar(ApiException e) => e.details?['similar'] is List ? asList(e.details!['similar']).map(asMap).toList() : const [];
 
