@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
+import '../directory/skills_screen.dart';
+
 import '../common/settings_screen.dart';
 import 'actions.dart';
 import 'earnings_screen.dart';
@@ -146,6 +148,7 @@ class _Board extends StatelessWidget {
           'schedule' => const ScheduleScreen(),
           'earnings' => const EarningsScreen(),
           'stock' => const StockScreen(),
+          'skills' => const SkillsScreen(),
           _ => SettingsScreen(repository: repo),
         };
         Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => route));
@@ -153,6 +156,7 @@ class _Board extends StatelessWidget {
       itemBuilder: (ctx) => [
         PopupMenuItem(value: 'schedule', child: ListTile(leading: const Icon(Icons.calendar_month_outlined), title: Text(ctx.tr('nav.mySchedule')), contentPadding: EdgeInsets.zero)),
         PopupMenuItem(value: 'stock', child: ListTile(leading: const Icon(Icons.inventory_2_outlined), title: Text(ctx.tr('nav.myStock')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'skills', child: ListTile(leading: const Icon(Icons.verified_outlined), title: Text(ctx.tr('nav.mySkills')), contentPadding: EdgeInsets.zero)),
         PopupMenuItem(value: 'earnings', child: ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: Text(ctx.tr('nav.myEarnings')), contentPadding: EdgeInsets.zero)),
         PopupMenuItem(value: 'settings', child: ListTile(leading: const Icon(Icons.settings_outlined), title: Text(ctx.tr('mobile.settings')), contentPadding: EdgeInsets.zero)),
       ],

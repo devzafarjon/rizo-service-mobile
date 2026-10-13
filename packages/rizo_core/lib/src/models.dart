@@ -201,6 +201,12 @@ class Job {
         isOverdue = _bool(raw['isOverdue']),
         isLegallyOverdue = _bool(raw['isLegallyOverdue']),
         isRepeat = _bool(raw['isRepeat']),
+        tier = _int(raw['tier']) == 2 ? 2 : 1,
+        brandName = raw['brand'] is Map ? _s((raw['brand'] as Map)['name']) : null,
+        waitingForFirstTier = _bool(raw['waitingForFirstTier']),
+        queueOverrideBy = raw['queueOverride'] is Map ? _s((raw['queueOverride'] as Map)['by']) : null,
+        queueOverrideReason = raw['queueOverride'] is Map ? _s((raw['queueOverride'] as Map)['reason']) : null,
+        queueOverridden = raw['queueOverride'] is Map,
         isPaidRepair = _bool(raw['isPaidRepair']),
         defectCodeId = _s(raw['defectCodeId']),
         assignedTechnicianId = _s(raw['assignedTechnicianId']),
@@ -250,6 +256,16 @@ class Job {
   final bool isOverdue;
   final bool isLegallyOverdue;
   final bool isRepeat;
+
+  /// 1 = RIZO product or under warranty; 2 = another maker, paid, done after the technician's first-tier jobs.
+  final int tier;
+  final String? brandName;
+
+  /// True while this job must wait for the technician's RIZO and warranty jobs (only the technician's own list says so).
+  final bool waitingForFirstTier;
+  final bool queueOverridden;
+  final String? queueOverrideBy;
+  final String? queueOverrideReason;
   final bool isPaidRepair;
   final String? defectCodeId;
   final String? assignedTechnicianId;
@@ -265,6 +281,7 @@ class Job {
   final String? resolutionType;
   final String technicianTypeRequired;
 
+  bool get isSecondTier => tier == 2;
   bool get isRepair => type == 'repair';
   bool get isOnSite => locationType == 'on_site';
 }
@@ -1161,4 +1178,48 @@ class RestockSuggestion {
   final WarehouseStockItem item;
   final int recommended;
   final List<SourceOption> options;
+}
+
+/// A brand in the directory of makes (the company's own brand is RIZO).
+class DirBrand {
+  DirBrand(Json m)
+      : id = _str(m['id']),
+        name = _str(m['name']),
+        isOwn = _bool(m['isOwn']),
+        approved = m['approved'] != false,
+        addedByName = _s(m['addedByName']),
+        modelCount = _int(m['modelCount']),
+        pendingModels = _int(m['pendingModels']),
+        categories = m['categories'] is List ? (m['categories'] as List).map((e) => e.toString()).toList() : const [];
+  final String id;
+  final String name;
+  final bool isOwn;
+  final bool approved;
+  final String? addedByName;
+  final int modelCount;
+  final int pendingModels;
+  final List<String> categories;
+}
+
+/// A model of a device by another maker (stored as a product without a RIZO warranty).
+class DirModel {
+  DirModel(Json m)
+      : id = _str(m['id']),
+        name = _str(m['name']),
+        category = _str(m['category']),
+        brandId = _str(m['brandId']),
+        brandName = _s(m['brandName']),
+        isOwn = _bool(m['isOwn']),
+        approved = m['approved'] != false,
+        addedByName = _s(m['addedByName']),
+        requestsCount = _int(m['requestsCount']);
+  final String id;
+  final String name;
+  final String category;
+  final String brandId;
+  final String? brandName;
+  final bool isOwn;
+  final bool approved;
+  final String? addedByName;
+  final int requestsCount;
 }

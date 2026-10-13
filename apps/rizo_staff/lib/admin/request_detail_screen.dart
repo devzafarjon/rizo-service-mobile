@@ -136,6 +136,37 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
 
   Widget _banner(String text, Color fg, Color bg) => Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14)), child: Text(text, style: TextStyle(color: fg, fontWeight: FontWeight.w800)));
 
+  /// A second-tier job (another maker, paid): says that it waits for the technician's RIZO and warranty jobs, and lets an admin move it up.
+  Widget _queueNotice(Job job) {
+    final queue = asMap(data?['queue']);
+    final waiting = queue['waiting'] == true;
+    final isAdmin = _session.user?.isAdmin ?? false;
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: Brand.blueTint, borderRadius: BorderRadius.circular(12)),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(context.tr('directory.tierNote'), style: TextStyle(color: Brand.blue, fontWeight: FontWeight.w800)),
+        if (job.queueOverridden)
+          Text(context.tr('directory.overridden', params: {'by': job.queueOverrideBy ?? '-', 'reason': job.queueOverrideReason ?? ''}), style: TextStyle(color: Brand.blue))
+        else if (waiting)
+          Text(context.tr('directory.waitingNote', params: {'count': queue['backlog'] ?? 0}), style: TextStyle(color: Brand.blue)),
+        if (isAdmin && waiting && !job.queueOverridden)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () async {
+                final reason = await promptDialog(context, title: context.tr('directory.moveToFront'), hint: context.tr('directory.overrideBody'), label: context.tr('directory.overrideReason'), maxLines: 1);
+                if (reason != null) await _call(() => _api.post('$_path/queue-override', body: {'reason': reason}), success: tr('directory.overrideDone'));
+              },
+              icon: const Icon(Icons.vertical_align_top),
+              label: Text(context.tr('directory.moveToFront')),
+            ),
+          ),
+      ]),
+    );
+  }
+
   Widget _summary(Job job, String locale) {
     final trackUrl = job.trackingToken == null ? null : '${AppConfig.webUrl}/t/${job.trackingToken}';
     return Section(
@@ -148,12 +179,14 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
           StatusChip(job.status),
           Pill(context.tr('priority.${job.priority}')),
           WarrantyChip(job.warrantyStatus),
+          if (job.isSecondTier) Pill(job.brandName == null ? context.tr('directory.tierBadge') : context.tr('directory.tierBadgeBrand', params: {'brand': job.brandName}), color: Brand.blue, background: Brand.blueTint),
           LocationChip(job.locationType),
           if (job.isRepeat) Pill(context.tr('detail.repeat'), color: Brand.red, background: Brand.redTint),
           if (job.isLegallyOverdue) Pill(context.tr('detail.legalOverdue'), color: Brand.red, background: Brand.redTint),
           if (job.estimateStatus != null) Pill(context.tr('estimate.status.${job.estimateStatus}'), color: Brand.purple, background: Brand.purpleTint),
           if (job.payment.balance > 0) Pill(context.tr('detail.owes', params: {'amount': formatMoney(job.payment.balance)}), color: Brand.red, background: Brand.redTint),
         ]),
+        if (job.isSecondTier) _queueNotice(job),
         if (job.timer != null) Padding(padding: const EdgeInsets.only(top: 10), child: CountdownChip(job.timer!)),
         if (job.activePause != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: TextStyle(fontWeight: FontWeight.w700, color: Brand.subtle))),
         const SizedBox(height: 10),

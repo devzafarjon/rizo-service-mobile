@@ -602,4 +602,34 @@ void _growthTests() {
       expect(find.textContaining('not set up'), findsOneWidget);
     });
   });
+
+  group('other makers and the queue rule', () {
+    test('a RIZO job is first tier and does not wait', () {
+      final job = Job(<String, dynamic>{'id': 'a', 'tier': 1, 'brand': {'id': 'brand_rizo', 'name': 'RIZO', 'isOwn': true}, 'queueOverride': null});
+      expect(job.isSecondTier, isFalse);
+      expect(job.waitingForFirstTier, isFalse);
+      expect(job.queueOverridden, isFalse);
+    });
+
+    test('a second-tier job carries its brand, the waiting flag and an admin override', () {
+      final waiting = Job(<String, dynamic>{'id': 'b', 'tier': 2, 'brand': {'id': 'x', 'name': 'Samsung', 'isOwn': false}, 'waitingForFirstTier': true});
+      expect(waiting.isSecondTier, isTrue);
+      expect(waiting.brandName, 'Samsung');
+      expect(waiting.waitingForFirstTier, isTrue);
+      final moved = Job(<String, dynamic>{'id': 'c', 'tier': 2, 'queueOverride': {'reason': 'In a hurry', 'by': 'Admin', 'at': '2026-10-13T10:00:00Z'}});
+      expect(moved.queueOverridden, isTrue);
+      expect(moved.queueOverrideReason, 'In a hurry');
+      expect(moved.queueOverrideBy, 'Admin');
+    });
+
+    test('brands and models of the directory parse, with approval defaulting to approved', () {
+      final brand = DirBrand(<String, dynamic>{'id': 'b1', 'name': 'LG', 'isOwn': false, 'approved': false, 'modelCount': 2, 'pendingModels': 1, 'categories': ['Muzlatkichlar']});
+      expect(brand.approved, isFalse);
+      expect(brand.categories, ['Muzlatkichlar']);
+      expect(brand.pendingModels, 1);
+      final model = DirModel(<String, dynamic>{'id': 'm1', 'name': 'LG GC-B459', 'category': 'Muzlatkichlar', 'brandId': 'b1'});
+      expect(model.approved, isTrue);
+      expect(model.isOwn, isFalse);
+    });
+  });
 }

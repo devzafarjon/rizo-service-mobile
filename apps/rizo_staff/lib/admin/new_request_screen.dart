@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
+import '../directory/device_picker.dart';
+
 const _intakeItems = ['powers_on', 'screen_ok', 'body_scratches', 'accessories_included', 'original_packaging', 'water_damage_signs'];
 
 class _CustomerRow {
@@ -33,6 +35,10 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   List<ServiceCenter> centers = [];
   String? saleId;
   String? productId;
+
+  /// 'rizo' = a product sold by RIZO (or under its warranty); 'other' = a device of another maker, repaired for a fee.
+  String deviceMode = 'rizo';
+  DirModel? otherModel;
   String defectType = 'failed_during_use';
   String locationType = 'in_shop';
   String priority = 'medium';
@@ -92,8 +98,9 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   Future<void> _submit({bool allowDuplicate = false}) async {
     if (customer == null) return showSnack(context, context.tr('newRequest.selectCustomer'), error: true);
     final sale = sales.cast<Json?>().firstWhere((s) => s!['id'] == saleId, orElse: () => null);
-    final product = sale != null ? asMap(sale['product'])['id']?.toString() : productId;
-    if (product == null) return showSnack(context, context.tr('newRequest.selectProduct'), error: true);
+    final useOther = deviceMode == 'other' && type == 'repair' && saleId == null;
+    final product = sale != null ? asMap(sale['product'])['id']?.toString() : (useOther ? otherModel?.id : productId);
+    if (product == null) return showSnack(context, context.tr(useOther ? 'directory.pickModel' : 'newRequest.selectProduct'), error: true);
     if (_issue.text.trim().isEmpty) return showSnack(context, context.tr('newRequest.issueHint'), error: true);
     if (_onSite && _address.text.trim().isEmpty) return showSnack(context, context.tr('newRequest.addressPlaceholder'), error: true);
     final signature = type == 'repair' && !_onSite ? await _signature.currentState?.toDataUrl() : null;
@@ -167,7 +174,22 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
                     }),
                   ),
                 ),
-              if (saleId == null)
+              if (saleId == null && type == 'repair')
+                Labeled(
+                  context.tr('newRequest.product'),
+                  child: SegmentedChoice<String>(
+                    value: deviceMode,
+                    options: {'rizo': context.tr('newRequest.device.rizo'), 'other': context.tr('newRequest.device.other')},
+                    onChanged: (v) => setState(() {
+                      deviceMode = v;
+                      productId = null;
+                      otherModel = null;
+                    }),
+                  ),
+                ),
+              if (saleId == null && type == 'repair' && deviceMode == 'other')
+                OtherDevicePicker(value: otherModel, onChanged: (m) => setState(() => otherModel = m)),
+              if (saleId == null && !(type == 'repair' && deviceMode == 'other'))
                 Labeled(
                   context.tr('newRequest.product'),
                   child: DropdownButtonFormField<String?>(
