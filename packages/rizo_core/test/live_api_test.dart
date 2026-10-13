@@ -184,6 +184,23 @@ void main() {
     }, skip: !_live);
   });
 
+  group('sign-in of the other side', () {
+    test('the staff app and the customer app say where an account belongs', () async {
+      final staffApp = ApiClient();
+      await expectLater(
+        staffApp.post('/api/staff/auth/login', body: {'phone': '998900000003', 'password': 'customer123'}),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'useCustomerApp')),
+      );
+      await expectLater(
+        staffApp.post('/api/customer/auth/login', body: {'phone': '998900000001', 'password': 'admin123'}),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'useStaffApp')),
+      );
+      // The website's one sign-in tells who it is.
+      final staff = asMap(await staffApp.post('/api/auth/login', body: {'phone': '998900000001', 'password': 'admin123'}));
+      expect(staff['scope'], 'staff');
+    }, skip: !_live);
+  });
+
   group('customer (RIZO Mijoz)', () {
     late ApiClient api;
     setUpAll(() async {

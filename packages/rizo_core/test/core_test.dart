@@ -602,4 +602,16 @@ void _growthTests() {
       expect(find.textContaining('not set up'), findsOneWidget);
     });
   });
+  group('sign-in hints', () {
+    test('an account of the other app is pointed to that app, in every language', () {
+      for (final code in ['uz', 'ru', 'en']) {
+        final errors = (_bundle(code)['errors'] as Map<String, dynamic>);
+        expect(errors['useStaffApp'], isA<String>(), reason: '$code useStaffApp');
+        expect(errors['useCustomerApp'], isA<String>(), reason: '$code useCustomerApp');
+      }
+      Translator.I.loadForTest({'uz': _bundle('uz'), 'ru': _bundle('ru'), 'en': _bundle('en')}, locale: 'en');
+      expect(tr('errors.useStaffApp'), contains('RIZO Texnik'));
+      expect(tr('errors.useCustomerApp'), contains('RIZO Mijoz'));
+    });
+  });
 }
