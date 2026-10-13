@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
+import '../directory/skills_screen.dart';
+
 import 'request_detail_screen.dart';
 
 /// Messages for the dispatcher: overdue jobs, new customer messages, estimate answers, low stock.
@@ -151,6 +153,7 @@ class _TechniciansScreenState extends State<TechniciansScreen> {
                                 leading: CircleAvatar(backgroundColor: t.isAvailable ? Brand.greenTint : Brand.surfaceAlt, child: Icon(t.isAvailable ? Icons.check : Icons.pause, color: t.isAvailable ? Brand.green : Brand.muted)),
                                 title: Text(t.name, style: const TextStyle(fontWeight: FontWeight.w800)),
                                 subtitle: Text('${t.technicianType == null ? '' : '${context.tr('techType.${t.technicianType}')} · '}${t.isAvailable ? context.tr('common.free') : context.tr('shell.busy')} · ${context.tr('kanban.openJobs', params: {'count': t.openJobCount})}'),
+                                onTap: (context.read<StaffSession>().user?.isAdmin ?? false) ? () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => SkillsScreen(staffId: t.id, title: '${t.name} · ${context.tr('directory.mySkillsTitle')}'))) : null,
                                 trailing: IconButton(icon: Icon(Icons.call_outlined, color: Brand.purple), onPressed: () => openUri(context, telUri(t.phone))),
                               ),
                             ),

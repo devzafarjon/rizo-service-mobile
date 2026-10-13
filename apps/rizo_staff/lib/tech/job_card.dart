@@ -42,7 +42,16 @@ class JobCard extends StatelessWidget {
               StatusChip(job.status),
               if (job.isRepeat) Pill(context.tr('detail.repeat'), color: Brand.red, background: Brand.redTint),
               if (job.warrantyStatus == 'in_warranty') WarrantyChip(job.warrantyStatus),
+              if (job.isSecondTier) Pill(job.brandName == null ? context.tr('directory.tierBadge') : context.tr('directory.tierBadgeBrand', params: {'brand': job.brandName}), color: Brand.blue, background: Brand.blueTint),
             ]),
+            if (job.waitingForFirstTier)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: Brand.blueTint, borderRadius: BorderRadius.circular(12)),
+                child: Text(context.tr('directory.waitingTech'), style: TextStyle(color: Brand.blue, fontWeight: FontWeight.w800, fontSize: 13)),
+              ),
             if (job.scheduledAt != null)
               Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.scheduledFor', params: {'time': formatStamp(job.scheduledAt)}), style: TextStyle(color: Brand.orangeText, fontWeight: FontWeight.w800, fontSize: 12))),
             if (job.timer != null) Padding(padding: const EdgeInsets.only(top: 10), child: CountdownChip(job.timer!)),
@@ -50,8 +59,8 @@ class JobCard extends StatelessWidget {
               Padding(padding: const EdgeInsets.only(top: 8), child: Text(context.tr('tech.pausedReason', params: {'reason': job.activePause!.reason}), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Brand.subtle))),
             if (job.isOnSite && location != null)
               Padding(padding: const EdgeInsets.only(top: 10), child: _Wide(label: context.tr('maps.directions'), icon: Icons.navigation_outlined, tone: _Tone.orange, onTap: () => openUri(context, location.mapsUri))),
-            if (job.isOnSite && _column != 'completed') ..._siteButtons(context),
-            if (_column != 'completed') _Actions(job: job, actions: actions, onOpen: onOpen) else _OpenLink(onOpen: onOpen),
+            if (job.isOnSite && _column != 'completed' && !job.waitingForFirstTier) ..._siteButtons(context),
+            if (_column != 'completed' && !job.waitingForFirstTier) _Actions(job: job, actions: actions, onOpen: onOpen) else _OpenLink(onOpen: onOpen),
           ]),
         ),
       ),
