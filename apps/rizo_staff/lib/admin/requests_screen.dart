@@ -8,7 +8,10 @@ import 'request_detail_screen.dart';
 
 /// All requests for the office: search, filter by stage and type, pull to refresh.
 class RequestsScreen extends StatefulWidget {
-  const RequestsScreen({super.key, this.bell});
+  const RequestsScreen({super.key, this.bell, this.initialFilter = 'open'});
+
+  /// The stage filter chosen when the screen opens ("My work" rows open it ready-made).
+  final String initialFilter;
 
   /// The notifications bell (admin only), shown in the top bar.
   final Widget? bell;
@@ -17,7 +20,7 @@ class RequestsScreen extends StatefulWidget {
 }
 
 class _RequestsScreenState extends State<RequestsScreen> {
-  static const _filters = ['open', 'new', 'working', 'waiting', 'ready', 'done', 'overdue', 'unassigned', 'all'];
+  static const _filters = ['open', 'new', 'working', 'waiting', 'decision', 'ready', 'done', 'overdue', 'legal', 'unassigned', 'all'];
   static const _pageSize = 100;
   List<Job> jobs = [];
   int total = 0;
@@ -25,7 +28,8 @@ class _RequestsScreenState extends State<RequestsScreen> {
   bool loadingMore = false;
   Object? error;
   bool loading = true;
-  String filter = 'open';
+  late String filter = widget.initialFilter;
+  final _chips = ScrollController();
   String type = '';
   final _search = TextEditingController();
   Timer? _debounce;
@@ -36,6 +40,13 @@ class _RequestsScreenState extends State<RequestsScreen> {
   @override
   void initState() {
     super.initState();
+    // A filter chosen from outside ("My work") may sit off-screen in the chip row: bring it into view.
+    final index = _filters.indexOf(filter);
+    if (index > 2) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_chips.hasClients) _chips.jumpTo((index * 92.0).clamp(0.0, _chips.position.maxScrollExtent));
+      });
+    }
     _load();
     _poll = Timer.periodic(const Duration(seconds: 40), (_) => _load(silent: true));
   }
@@ -44,6 +55,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
   void dispose() {
     _debounce?.cancel();
     _poll?.cancel();
+    _chips.dispose();
     super.dispose();
   }
 
@@ -100,6 +112,8 @@ class _RequestsScreenState extends State<RequestsScreen> {
         'new' => j.status == 'new',
         'working' => j.status == 'diagnosing' || j.status == 'in_progress',
         'waiting' => const ['awaiting_decision', 'awaiting_parts', 'paused'].contains(j.status),
+        'decision' => j.status == 'awaiting_decision',
+        'legal' => j.isLegallyOverdue && !isTerminalStatus(j.status),
         'ready' => j.status == 'ready',
         'done' => isTerminalStatus(j.status),
         'overdue' => j.isOverdue && !isTerminalStatus(j.status),
@@ -136,7 +150,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
         ),
         SizedBox(
           height: 48,
-          child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: [
+          child: ListView(controller: _chips, scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 12), children: [
             for (final f in _filters)
               Padding(
                 padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),

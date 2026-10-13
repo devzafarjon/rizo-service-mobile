@@ -37,7 +37,9 @@
       "done": "Yopilgan",
       "overdue": "Muddati o‘tgan",
       "unassigned": "Tayinlanmagan",
-      "all": "Hammasi"
+      "all": "Hammasi",
+      "legal": "Qonuniy muddat o'tgan",
+      "decision": "Qaror kutmoqda"
     },
     "cancelTitle": "So‘rovni bekor qilish",
     "newCustomer": "Yangi mijoz",

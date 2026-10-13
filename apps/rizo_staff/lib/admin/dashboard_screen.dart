@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
-import '../parts/parts_screen.dart';
+import 'inbox_card.dart';
 
 /// Key numbers for the chosen period, with the change against the period before.
 class DashboardScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   String preset = 'month';
   DashboardData? data;
+  final _inbox = GlobalKey<InboxCardState>();
   Object? error;
   bool loading = true;
 
@@ -30,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       loading = data == null;
       error = null;
     });
+    unawaited(_inbox.currentState?.reload());
     try {
       final result = await context.read<StaffSession>().api.get('/api/staff/reports/dashboard', query: {'preset': preset});
       if (mounted) setState(() => data = DashboardData(asMap(result)));
@@ -59,6 +63,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             _load();
           }),
           const SizedBox(height: 12),
+          InboxCard(key: _inbox),
+          const SizedBox(height: 12),
           if (loading) const LoadingView(),
           if (error != null && d == null) ErrorView(error: error!, onRetry: _load),
           if (d != null) ...[
@@ -73,28 +79,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _Kpi(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)} (${d.total('ratingCount').round()})', null),
                 _Kpi(context.tr('dashboard.legalOverdue'), formatNumber(d.total('legalOverdue')), null, bad: d.total('legalOverdue') > 0),
                 _Kpi(context.tr('dashboard.debt'), formatMoney(d.total('debt')), null, bad: d.total('debt') > 0),
-                _Kpi(context.tr('dashboard.ftf'), d.service['firstTimeFixRate'] is num ? '${d.service['firstTimeFixRate']}%' : context.tr('common.dash'), null, bad: d.service['firstTimeFixRate'] is num && (d.service['firstTimeFixRate'] as num) < 70),
-                _Kpi(context.tr('dashboard.callbacks'), d.service['callbackRate'] is num ? '${d.service['callbackRate']}%' : context.tr('common.dash'), null),
-                _Kpi(context.tr('dashboard.callbackCost'), formatMoney(asDouble(d.service['callbackCost'])), null, bad: asDouble(d.service['callbackCost']) > 0),
-                _Kpi(context.tr('dashboard.partsWait'), formatDurationHours(d.service['avgPartsWaitHours'] is num ? (d.service['avgPartsWaitHours'] as num).toDouble() : null), null),
               ];
-              final parts = d.parts;
-              void openParts(int tab) => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PartsControlScreen(initialTab: tab)));
-              final partCards = parts == null
-                  ? <Widget>[]
-                  : [
-                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(1), child: _Kpi(context.tr('parts.stat.waiting'), formatNumber(parts.waitingRequests), null)),
-                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(1), child: _Kpi(context.tr('parts.stat.noOrder'), formatNumber(parts.noOrder), null, bad: parts.noOrder > 0)),
-                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(2), child: _Kpi(context.tr('parts.stat.late'), formatNumber(parts.lateOrders), null, bad: parts.lateOrders > 0)),
-                      InkWell(borderRadius: BorderRadius.circular(14), onTap: () => openParts(0), child: _Kpi(context.tr('parts.stat.toOrder'), formatNumber(parts.toOrder), null, bad: parts.toOrder > 0)),
-                    ];
               final ratio = cols == 2 ? 1.4 : 1.55;
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ratio, children: cards),
-                if (partCards.isNotEmpty) ...[
-                  Padding(padding: const EdgeInsets.fromLTRB(2, 16, 2, 8), child: Text(context.tr('dashboard.partsTitle').toUpperCase(), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Brand.muted))),
-                  GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ratio, children: partCards),
-                ],
               ]);
             }),
             const SizedBox(height: 12),

@@ -14,6 +14,7 @@ import 'dashboard_screen.dart';
 import 'feedback_screen.dart';
 import 'more_screens.dart';
 import 'request_detail_screen.dart';
+import 'service_quality_screen.dart';
 import 'requests_screen.dart';
 
 /// Admin / dispatcher and front desk. Phone: bottom bar. Tablet: side rail.
@@ -132,6 +133,7 @@ class _MoreScreen extends StatelessWidget {
         if (!user.isWarehouse) tile(Icons.engineering_outlined, context.tr('kanban.technicians'), const TechniciansScreen()),
         if (user.isAdmin || user.isReceptionist) tile(Icons.sell_outlined, context.tr('nav.directory'), const DirectoryScreen()),
         if (user.isAdmin) tile(Icons.bolt_outlined, context.tr('nav.automation'), const AutomationScreen()),
+        if (user.isAdmin) tile(Icons.health_and_safety_outlined, context.tr('reports.nav.service'), const ServiceQualityScreen()),
         if (!user.isWarehouse) tile(Icons.inventory_2_outlined, context.tr('nav.partOrders'), const PartsControlScreen()),
         if (!user.isWarehouse) tile(Icons.warehouse_outlined, context.tr('nav.warehouses'), const WarehouseScreen()),
         if (user.isAdmin || user.isWarehouse) tile(Icons.inventory_outlined, context.tr('nav.techStock'), const TechStockScreen()),

@@ -37,7 +37,9 @@
       "done": "Closed",
       "overdue": "Overdue",
       "unassigned": "Unassigned",
-      "all": "All"
+      "all": "All",
+      "legal": "Past legal limit",
+      "decision": "Needs decision"
     },
     "cancelTitle": "Cancel request",
     "newCustomer": "New customer",
