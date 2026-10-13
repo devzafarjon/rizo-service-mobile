@@ -9,6 +9,7 @@ import '../parts/parts_screen.dart';
 import '../tech/scan_screen.dart';
 import '../warehouse/tech_stock_screen.dart';
 import '../warehouse/warehouse_screen.dart';
+import 'automation_screen.dart';
 import 'dashboard_screen.dart';
 import 'feedback_screen.dart';
 import 'more_screens.dart';
@@ -130,6 +131,7 @@ class _MoreScreen extends StatelessWidget {
         if (!user.isWarehouse) tile(Icons.event_note_outlined, context.tr('calendar.title'), const VisitsScreen()),
         if (!user.isWarehouse) tile(Icons.engineering_outlined, context.tr('kanban.technicians'), const TechniciansScreen()),
         if (user.isAdmin || user.isReceptionist) tile(Icons.sell_outlined, context.tr('nav.directory'), const DirectoryScreen()),
+        if (user.isAdmin) tile(Icons.bolt_outlined, context.tr('nav.automation'), const AutomationScreen()),
         if (!user.isWarehouse) tile(Icons.inventory_2_outlined, context.tr('nav.partOrders'), const PartsControlScreen()),
         if (!user.isWarehouse) tile(Icons.warehouse_outlined, context.tr('nav.warehouses'), const WarehouseScreen()),
         if (user.isAdmin || user.isWarehouse) tile(Icons.inventory_outlined, context.tr('nav.techStock'), const TechStockScreen()),

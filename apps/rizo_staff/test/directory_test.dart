@@ -80,6 +80,14 @@ class _FakeDirectory {
       models.add(row);
       return _json({'model': row, 'created': true}, 201);
     }
+    if (r.method == 'PATCH' && RegExp(r'^/brands/[^/]+$').hasMatch(path)) {
+      final body = jsonDecode(r.body) as Map<String, dynamic>;
+      final id = path.split('/').last;
+      for (final b in brands) {
+        if (b['id'] == id) b['name'] = body['name'];
+      }
+      return _json({'brand': brands.firstWhere((b) => b['id'] == id)});
+    }
     if (r.method == 'DELETE') {
       calls.add('deleted');
       return _json({'ok': true});
@@ -118,6 +126,34 @@ void main() {
     await tester.pumpAndSettle();
     expect(fake.calls.any((c) => c.startsWith('POST /brands/mid/approve')), isTrue);
     expect(fake.brands.firstWhere((b) => b['id'] == 'mid')['approved'], isTrue);
+  });
+
+  testWidgets('the admin renames and deletes a brand from its menu', (tester) async {
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    final fake = _FakeDirectory();
+    await _open(tester, fake, 'admin', const DirectoryScreen());
+    // Samsung's row (the second brand with a menu): open its menu and rename.
+    await tester.tap(find.byType(PopupMenuButton<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rename'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'Samsung Electronics');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pumpAndSettle();
+    expect(fake.calls.any((c) => c.startsWith('PATCH /brands/sam') && c.contains('Samsung Electronics')), isTrue);
+    await tester.tap(find.byType(PopupMenuButton<String>).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete').last); // the confirm button
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+    await tester.pumpAndSettle();
+    expect(fake.calls, contains('deleted'));
   });
 
   testWidgets('the front desk reads the directory but gets no approve or delete menus', (tester) async {

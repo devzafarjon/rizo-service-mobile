@@ -73,7 +73,7 @@ class _SkillsEditorState extends State<SkillsEditor> {
       final r = await _api.put('/api/staff/directory/skills', body: {if (widget.staffId != null) 'staffId': widget.staffId, 'brandIds': brandIds, 'productIds': productIds});
       if (mounted) setState(() => _apply(r));
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -106,7 +106,7 @@ class _SkillsEditorState extends State<SkillsEditor> {
       final list = await loadModels(context, brandId: id);
       if (mounted) setState(() => models = list);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

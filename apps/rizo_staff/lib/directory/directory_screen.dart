@@ -51,7 +51,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
       final list = await loadModels(context, brandId: brandId);
       if (mounted) setState(() => models[brandId] = list);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -60,7 +60,7 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
       await work();
       await _load();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -74,26 +74,26 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
   Future<void> _merge({required bool brand, required String id, required String name}) async {
     String? intoId;
     if (brand) {
-      intoId = await _chooseOne(context.tr('directory.mergeTitle', params: {'name': name}), [for (final b in brands.where((b) => b.id != id)) (b.id, b.name)]);
+      intoId = await _chooseOne(tr('directory.mergeTitle', params: {'name': name}), [for (final b in brands.where((b) => b.id != id)) (b.id, b.name)]);
     } else {
-      final brandId = await _chooseOne(context.tr('directory.brand'), [for (final b in brands.where((b) => !b.isOwn)) (b.id, b.name)]);
+      final brandId = await _chooseOne(tr('directory.brand'), [for (final b in brands.where((b) => !b.isOwn)) (b.id, b.name)]);
       if (brandId == null || !mounted) return;
       final options = (await loadModels(context, brandId: brandId)).where((m) => m.id != id && !m.isOwn).toList();
       if (!mounted) return;
-      intoId = await _chooseOne(context.tr('directory.mergeTitle', params: {'name': name}), [for (final m in options) (m.id, m.name)]);
+      intoId = await _chooseOne(tr('directory.mergeTitle', params: {'name': name}), [for (final m in options) (m.id, m.name)]);
     }
     if (intoId == null) return;
     await _run(() => _api.post('/api/staff/directory/${brand ? 'brands' : 'models'}/$id/merge', body: {'intoId': intoId}));
   }
 
   Future<void> _rename({required bool brand, required String id, required String name}) async {
-    final text = await promptDialog(context, title: context.tr('directory.rename'), label: context.tr(brand ? 'directory.brand' : 'directory.model'), initial: name, maxLines: 1);
+    final text = await promptDialog(context, title: tr('directory.rename'), label: tr(brand ? 'directory.brand' : 'directory.model'), initial: name, maxLines: 1);
     if (text == null) return;
     await _run(() => _api.patch('/api/staff/directory/${brand ? 'brands' : 'models'}/$id', body: brand ? {'name': text} : {'model': text}));
   }
 
   Future<void> _delete({required bool brand, required String id, required String name}) async {
-    if (!await confirmDialog(context, context.tr('directory.deleteTitle'), body: context.tr('directory.deleteBody', params: {'name': name}), confirmLabel: context.tr('directory.delete'))) return;
+    if (!await confirmDialog(context, tr('directory.deleteTitle'), body: tr('directory.deleteBody', params: {'name': name}), confirmLabel: tr('directory.delete'))) return;
     await _run(() => _api.delete('/api/staff/directory/${brand ? 'brands' : 'models'}/$id'));
   }
 
@@ -112,10 +112,10 @@ class _DirectoryScreenState extends State<DirectoryScreen> {
         }
       },
       itemBuilder: (ctx) => [
-        if (!approved) PopupMenuItem(value: 'approve', child: Text(ctx.tr('directory.approve'))),
-        PopupMenuItem(value: 'rename', child: Text(ctx.tr('directory.rename'))),
-        PopupMenuItem(value: 'merge', child: Text(ctx.tr('directory.merge'))),
-        PopupMenuItem(value: 'delete', child: Text(ctx.tr('directory.delete'))),
+        if (!approved) PopupMenuItem(value: 'approve', child: Text(tr('directory.approve'))),
+        PopupMenuItem(value: 'rename', child: Text(tr('directory.rename'))),
+        PopupMenuItem(value: 'merge', child: Text(tr('directory.merge'))),
+        PopupMenuItem(value: 'delete', child: Text(tr('directory.delete'))),
       ],
     );
   }

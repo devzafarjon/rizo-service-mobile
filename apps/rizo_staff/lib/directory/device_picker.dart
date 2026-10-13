@@ -64,14 +64,14 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
         if (preset.isNotEmpty) _brand.text = preset.first.name;
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
   Future<void> _save({bool force = false}) async {
     final api = _api(context);
     final key = directoryKey(_brand.text);
-    if (key.isEmpty || category == null || directoryKey(_model.text).isEmpty) return showSnack(context, context.tr('directory.pickModel'), error: true);
+    if (key.isEmpty || category == null || directoryKey(_model.text).isEmpty) return showSnack(context, tr('directory.pickModel'), error: true);
     try {
       DirBrand? brand;
       for (final b in brands) {
@@ -94,7 +94,7 @@ class _AddDeviceSheetState extends State<_AddDeviceSheet> {
         rethrow;
       }
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -176,7 +176,7 @@ class _OtherDevicePickerState extends State<OtherDevicePicker> {
         brands = (results[1] as List<DirBrand>).where((b) => !b.isOwn).toList();
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -186,7 +186,7 @@ class _OtherDevicePickerState extends State<OtherDevicePicker> {
       final list = await loadModels(context, brandId: brandId, category: category);
       if (mounted) setState(() => models = list);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
