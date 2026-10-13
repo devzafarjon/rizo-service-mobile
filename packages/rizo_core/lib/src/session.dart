@@ -64,6 +64,14 @@ abstract class AuthSession<U> extends ChangeNotifier {
         final data = await api.get(mePath);
         user = parseUser(asMap(data)['user']);
         await _cacheUser(user as U);
+        // A session older than half a day comes back with a fresh token: keep it, so the person stays signed in for 30 days from the last use.
+        final fresh = asMap(data)['token'];
+        if (fresh is String && fresh.isNotEmpty) {
+          token = fresh;
+          try {
+            await _storage.write(key: _tokenKey, value: fresh);
+          } catch (_) {}
+        }
         startedOffline = false;
       } on ApiException catch (error) {
         if (error.isAuth || error.status == 401 || error.status == 403) {
