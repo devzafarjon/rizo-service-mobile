@@ -31,14 +31,14 @@ class _RegisterProductScreenState extends State<RegisterProductScreen> {
     }).catchError((Object e) {
       if (mounted) {
         setState(() => loading = false);
-        showSnack(context, context.errorText(e), error: true);
+        showSnack(context, Translator.I.errorMessage(e), error: true);
       }
     });
   }
 
   Future<void> _submit() async {
     if (productId == null || _serial.text.trim().isEmpty || purchaseDate == null) {
-      showSnack(context, context.tr('errors.required'), error: true);
+      showSnack(context, tr('errors.required'), error: true);
       return;
     }
     try {
@@ -49,10 +49,10 @@ class _RegisterProductScreenState extends State<RegisterProductScreen> {
         if (_invoice.text.trim().isNotEmpty) 'invoiceNumber': _invoice.text.trim(),
       });
       if (!mounted) return;
-      showSnack(context, context.tr('register.saved'));
+      showSnack(context, tr('register.saved'));
       Navigator.of(context).pop();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

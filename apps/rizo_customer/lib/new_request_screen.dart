@@ -58,7 +58,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         ready = true;
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -89,15 +89,15 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         try {
           await _api.upload('/api/customer/requests/$id/photos', [for (var i = 0; i < photos.length; i++) UploadFile('photo-$i.jpg', photos[i])]);
         } catch (_) {
-          if (mounted) showSnack(context, context.tr('errors.uploadFailed'), error: true);
+          if (mounted) showSnack(context, tr('errors.uploadFailed'), error: true);
         }
       }
       if (!mounted) return;
       // The request exists even when the chosen window was taken meanwhile; say so and let the customer pick again.
-      showSnack(context, visitError != null ? context.tr('visit.notBooked') : context.tr('portal.created'), error: visitError != null);
+      showSnack(context, visitError != null ? tr('visit.notBooked') : tr('portal.created'), error: visitError != null);
       Navigator.of(context).pop(id);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

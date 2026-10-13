@@ -25,7 +25,7 @@ class _TrackScreenState extends State<TrackScreen> {
       if (!mounted) return;
       await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TrackResultScreen(token: token)));
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -85,7 +85,7 @@ class _TrackResultScreenState extends State<TrackResultScreen> {
         showSnack(context, tr(action == 'approve' ? 'portal.estimateApproved' : 'portal.estimateDeclined'));
       }
     } catch (err) {
-      if (mounted) showSnack(context, context.errorText(err), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(err), error: true);
     }
   }
 

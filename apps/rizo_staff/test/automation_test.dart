@@ -54,12 +54,20 @@ class _FakeAuto {
   }
 }
 
-Future<void> _open(WidgetTester tester, _FakeAuto fake) async {
+Future<void> _open(WidgetTester tester, _FakeAuto fake, {bool dark = false}) async {
   tester.view.physicalSize = const Size(1000, 6000);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
   SharedPreferences.setMockInitialValues({'rizo_locale': 'en'});
   await tester.runAsync(() => Translator.I.load());
+  if (dark) {
+    SharedPreferences.setMockInitialValues({'rizo_locale': 'en', 'rizo_theme': 'dark'});
+    await tester.runAsync(() => ThemeController.I.load());
+    addTearDown(() async {
+      SharedPreferences.setMockInitialValues({'rizo_theme': 'light'});
+      await ThemeController.I.load();
+    });
+  }
   final session = StaffSession(httpClient: MockClient(fake.handle));
   session.user = StaffUser(id: 'a1', name: 'Admin', phone: '998900000001', role: 'admin');
   session.restoring = false;
@@ -97,6 +105,13 @@ void main() {
     expect(find.text('WEEK 2026-10-05 – 2026-10-11'), findsOneWidget);
     expect(find.textContaining('Aziz Rakhimov'), findsWidgets);
     expect(find.textContaining('Jobs: 6'), findsOneWidget);
+  });
+
+  testWidgets('night mode: the Automatic tasks screen draws without errors', (tester) async {
+    await _open(tester, _FakeAuto(), dark: true);
+    expect(Brand.dark, isTrue);
+    expect(find.text('Automatic tasks'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('"Run now" runs the daily report on the server and shows its result', (tester) async {

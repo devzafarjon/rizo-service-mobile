@@ -96,9 +96,17 @@ class _FakeDirectory {
   }
 }
 
-Future<void> _open(WidgetTester tester, _FakeDirectory fake, String role, Widget screen) async {
+Future<void> _open(WidgetTester tester, _FakeDirectory fake, String role, Widget screen, {bool dark = false}) async {
   SharedPreferences.setMockInitialValues({'rizo_locale': 'en'});
   await tester.runAsync(() => Translator.I.load());
+  if (dark) {
+    SharedPreferences.setMockInitialValues({'rizo_locale': 'en', 'rizo_theme': 'dark'});
+    await tester.runAsync(() => ThemeController.I.load());
+    addTearDown(() async {
+      SharedPreferences.setMockInitialValues({'rizo_theme': 'light'});
+      await ThemeController.I.load();
+    });
+  }
   final session = StaffSession(httpClient: MockClient(fake.handle));
   session.user = StaffUser(id: 'u1', name: 'Tester', phone: '998900000001', role: role);
   session.restoring = false;
@@ -154,6 +162,18 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
     await tester.pumpAndSettle();
     expect(fake.calls, contains('deleted'));
+  });
+
+  testWidgets('night mode: the directory and the "I repair" screens draw without errors', (tester) async {
+    tester.view.physicalSize = const Size(1000, 2400);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await _open(tester, _FakeDirectory(), 'admin', const DirectoryScreen(), dark: true);
+    expect(Brand.dark, isTrue);
+    expect(find.text('Brands and models'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _open(tester, _FakeDirectory(), 'technician', const SkillsScreen(), dark: true);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the front desk reads the directory but gets no approve or delete menus', (tester) async {

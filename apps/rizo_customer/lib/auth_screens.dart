@@ -32,14 +32,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     if (_phone.text.trim().isEmpty || _password.text.isEmpty) {
-      setState(() => _error = context.tr('errors.required'));
+      setState(() => _error = tr('errors.required'));
       return;
     }
     setState(() => _error = null);
     try {
       await context.read<CustomerSession>().login(_phone.text.trim(), _password.text);
     } catch (e) {
-      if (mounted) setState(() => _error = context.errorText(e));
+      if (mounted) setState(() => _error = Translator.I.errorMessage(e));
     }
   }
 
@@ -96,7 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _submit() async {
     if (_name.text.trim().isEmpty || _phone.text.trim().isEmpty || _password.text.length < 6) {
-      setState(() => _error = context.tr('errors.passwordLength'));
+      setState(() => _error = tr('errors.passwordLength'));
       return;
     }
     setState(() => _error = null);
@@ -104,7 +104,7 @@ class _SignupScreenState extends State<SignupScreen> {
       await context.read<CustomerSession>().signup(name: _name.text.trim(), phone: _phone.text.trim(), password: _password.text, address: _address.text);
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } catch (e) {
-      if (mounted) setState(() => _error = context.errorText(e));
+      if (mounted) setState(() => _error = Translator.I.errorMessage(e));
     }
   }
 
@@ -140,7 +140,7 @@ class _ForgotScreenState extends State<ForgotScreen> {
       await context.read<CustomerSession>().forgotPassword(_phone.text.trim());
       if (mounted) setState(() => _sent = true);
     } catch (e) {
-      if (mounted) setState(() => _error = context.errorText(e));
+      if (mounted) setState(() => _error = Translator.I.errorMessage(e));
     }
   }
 

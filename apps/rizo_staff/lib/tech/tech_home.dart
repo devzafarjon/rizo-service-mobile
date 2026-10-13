@@ -41,7 +41,7 @@ class _TechHomeState extends State<TechHome> with WidgetsBindingObserver {
     try {
       await repo.refresh();
     } catch (error) {
-      if (mounted) showSnack(context, context.errorText(error), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(error), error: true);
     }
   }
 

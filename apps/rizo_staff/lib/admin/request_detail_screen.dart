@@ -59,7 +59,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       await _load();
       return true;
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
       return false;
     }
   }

@@ -68,7 +68,7 @@ class _RecommendationsTabState extends State<RecommendationsTab> {
       showSnack(context, markOrdered ? tr('parts.rec.placed') : tr('parts.orderCreated'));
       widget.onChanged();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

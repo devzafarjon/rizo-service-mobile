@@ -39,12 +39,20 @@ class _Fake {
   }
 }
 
-Future<void> _open(WidgetTester tester, _Fake fake, Widget screen) async {
+Future<void> _open(WidgetTester tester, _Fake fake, Widget screen, {bool dark = false}) async {
   tester.view.physicalSize = const Size(1000, 3200);
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
   SharedPreferences.setMockInitialValues({'rizo_locale': 'en'});
   await tester.runAsync(() => Translator.I.load());
+  if (dark) {
+    SharedPreferences.setMockInitialValues({'rizo_locale': 'en', 'rizo_theme': 'dark'});
+    await tester.runAsync(() => ThemeController.I.load());
+    addTearDown(() async {
+      SharedPreferences.setMockInitialValues({'rizo_theme': 'light'});
+      await ThemeController.I.load();
+    });
+  }
   final session = StaffSession(httpClient: MockClient(fake.handle));
   session.user = StaffUser(id: 'a1', name: 'Admin', phone: '998900000001', role: 'admin');
   session.restoring = false;
@@ -84,6 +92,16 @@ void main() {
     final chip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Unassigned'));
     expect(chip.selected, isTrue);
     expect(fake.calls, contains('GET /api/staff/requests'));
+  });
+
+  testWidgets('night mode: the first screen and the service-quality screen draw without errors', (tester) async {
+    await _open(tester, _Fake(), const DashboardScreen(), dark: true);
+    expect(Brand.dark, isTrue);
+    expect(find.text('MY WORK'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await _open(tester, _Fake(), const ServiceQualityScreen(), dark: true);
+    expect(find.text('FIRST-TIME FIX'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('with nothing waiting the card says all is clear', (tester) async {

@@ -93,7 +93,7 @@ class _OrderSheetState extends State<_OrderSheet> {
       showSnack(context, tr('parts.orderCreated'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -202,7 +202,7 @@ class _OrdersTabState extends State<OrdersTab> {
       await _api.patch('/api/staff/part-orders/${order.id}', body: body);
       widget.onChanged();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

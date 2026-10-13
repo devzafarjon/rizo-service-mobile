@@ -35,7 +35,7 @@ class _ScanScreenState extends State<ScanScreen> {
     if (_busy) return;
     final id = parseTag(raw);
     if (id == null) {
-      showSnack(context, context.tr('tag.invalid'), error: true);
+      showSnack(context, tr('tag.invalid'), error: true);
       return;
     }
     setState(() => _busy = true);
@@ -44,7 +44,7 @@ class _ScanScreenState extends State<ScanScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute<void>(builder: (_) => page));
     } catch (error) {
-      if (mounted) showSnack(context, context.errorText(error), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(error), error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

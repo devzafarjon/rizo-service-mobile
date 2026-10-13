@@ -62,7 +62,7 @@ class _TransfersTabState extends State<TransfersTab> {
       await _api.post('/api/staff/transfers/${t.id}/cancel');
       _done(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

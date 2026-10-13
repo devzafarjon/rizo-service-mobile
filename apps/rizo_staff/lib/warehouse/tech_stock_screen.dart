@@ -176,7 +176,7 @@ class _MoveSheetState extends State<_MoveSheet> {
       showSnack(context, tr('techStock.saved'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

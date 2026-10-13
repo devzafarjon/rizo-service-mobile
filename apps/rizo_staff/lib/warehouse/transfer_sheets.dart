@@ -56,7 +56,7 @@ class _ShipSheetState extends State<_ShipSheet> {
       showSnack(context, tr('warehouse.shipped'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -119,7 +119,7 @@ class _ReceiveSheetState extends State<_ReceiveSheet> {
       showSnack(context, tr('warehouse.received'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -164,7 +164,7 @@ class _RejectSheetState extends State<_RejectSheet> {
       await context.read<StaffSession>().api.post('/api/staff/transfers/${widget.transfer.id}/reject', body: {'reason': _reason.text.trim()});
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -244,7 +244,7 @@ class _NewRequestSheetState extends State<_NewRequestSheet> {
         choice = list.where((o) => o.recommended).map((o) => o.key).firstOrNull ?? '';
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     } finally {
       if (mounted) setState(() => loadingSources = false);
     }
@@ -268,7 +268,7 @@ class _NewRequestSheetState extends State<_NewRequestSheet> {
       showSnack(context, tr(choice == 'supplier' ? 'parts.orderCreated' : 'warehouse.requestSent'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

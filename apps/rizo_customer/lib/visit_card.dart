@@ -18,11 +18,11 @@ class VisitCard extends StatelessWidget {
       loadSlots: (date) async => asList(asMap(await api.get('/api/customer/visit-slots', query: {'date': date, 'requestId': request.id})) ['slots']).map(VisitSlot.new).toList(),
     );
     if (choice == null || !context.mounted) return;
-    final saved = context.tr('visit.saved');
+    final saved = tr('visit.saved');
     try {
       await onChanged(await api.post('$_path/visit', body: {'date': choice.date, 'slot': choice.slot}), success: saved);
     } catch (e) {
-      if (context.mounted) showSnack(context, context.errorText(e), error: true);
+      if (context.mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

@@ -74,7 +74,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         _ready = true;
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -96,13 +96,13 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   bool get _onSite => locationType == 'on_site' || type == 'installation';
 
   Future<void> _submit({bool allowDuplicate = false}) async {
-    if (customer == null) return showSnack(context, context.tr('newRequest.selectCustomer'), error: true);
+    if (customer == null) return showSnack(context, tr('newRequest.selectCustomer'), error: true);
     final sale = sales.cast<Json?>().firstWhere((s) => s!['id'] == saleId, orElse: () => null);
     final useOther = deviceMode == 'other' && type == 'repair' && saleId == null;
     final product = sale != null ? asMap(sale['product'])['id']?.toString() : (useOther ? otherModel?.id : productId);
-    if (product == null) return showSnack(context, context.tr(useOther ? 'directory.pickModel' : 'newRequest.selectProduct'), error: true);
-    if (_issue.text.trim().isEmpty) return showSnack(context, context.tr('newRequest.issueHint'), error: true);
-    if (_onSite && _address.text.trim().isEmpty) return showSnack(context, context.tr('newRequest.addressPlaceholder'), error: true);
+    if (product == null) return showSnack(context, tr(useOther ? 'directory.pickModel' : 'newRequest.selectProduct'), error: true);
+    if (_issue.text.trim().isEmpty) return showSnack(context, tr('newRequest.issueHint'), error: true);
+    if (_onSite && _address.text.trim().isEmpty) return showSnack(context, tr('newRequest.addressPlaceholder'), error: true);
     final signature = type == 'repair' && !_onSite ? await _signature.currentState?.toDataUrl() : null;
     final body = <String, dynamic>{
       'type': type,
@@ -127,13 +127,13 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
     try {
       await _api.post('/api/staff/requests', body: body);
       if (!mounted) return;
-      showSnack(context, context.tr('newRequest.created'));
+      showSnack(context, tr('newRequest.created'));
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.code == 'duplicateRequest') {
         final id = asString(e.details?['displayId']);
-        final again = await confirmDialog(context, context.tr('newRequest.duplicateTitle'), body: context.tr('newRequest.duplicateBody', params: {'id': formatRequestId(id)}), confirmLabel: context.tr('newRequest.createAnyway'));
+        final again = await confirmDialog(context, tr('newRequest.duplicateTitle'), body: tr('newRequest.duplicateBody', params: {'id': formatRequestId(id)}), confirmLabel: tr('newRequest.createAnyway'));
         if (again && mounted) await _submit(allowDuplicate: true);
       } else {
         showSnack(context, Translator.I.errorMessage(e), error: true);
@@ -307,7 +307,7 @@ class _CustomerPickerState extends State<_CustomerPicker> {
     } catch (e) {
       if (mounted) {
         setState(() => loading = false);
-        showSnack(context, context.errorText(e), error: true);
+        showSnack(context, Translator.I.errorMessage(e), error: true);
       }
     }
   }
@@ -317,7 +317,7 @@ class _CustomerPickerState extends State<_CustomerPicker> {
       final r = await widget.api.post('/api/staff/customers', body: {'name': _name.text.trim(), 'phone': _phone.text.trim(), if (_address.text.trim().isNotEmpty) 'address': _address.text.trim()});
       if (mounted) Navigator.pop(context, _CustomerRow(asMap(asMap(r)['customer'])));
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

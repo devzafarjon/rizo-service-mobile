@@ -178,7 +178,7 @@ class _VanRequestSheetState extends State<_VanRequestSheet> {
         choice = list.where((o) => o.recommended || o.selectable).map((o) => o.key).firstOrNull ?? '';
       });
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     } finally {
       if (mounted) setState(() => loadingSources = false);
     }
@@ -192,7 +192,7 @@ class _VanRequestSheetState extends State<_VanRequestSheet> {
       showSnack(context, tr('warehouse.requestSent'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

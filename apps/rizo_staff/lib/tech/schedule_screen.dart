@@ -49,7 +49,7 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => before == null ? working.remove(key) : working[key] = before);
-      showSnack(context, context.errorText(e), error: true);
+      showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 

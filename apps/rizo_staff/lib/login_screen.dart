@@ -19,7 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final phone = _phone.text.trim();
     final password = _password.text;
     if (phone.isEmpty || password.isEmpty) {
-      setState(() => _error = context.tr('errors.required'));
+      setState(() => _error = tr('errors.required'));
       return;
     }
     setState(() => _error = null);
@@ -32,11 +32,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (error is ApiException && error.code == 'totpRequired') {
         setState(() {
           _needCode = true;
-          _error = context.tr('security.codeNeeded');
+          _error = tr('security.codeNeeded');
         });
         return;
       }
-      setState(() => _error = context.errorText(error));
+      setState(() => _error = Translator.I.errorMessage(error));
     }
   }
 

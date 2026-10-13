@@ -52,7 +52,7 @@ class _SuppliersTabState extends State<SuppliersTab> {
       await _api.patch('/api/staff/suppliers/${s.id}', body: {'isActive': !s.isActive});
       await _load();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -149,7 +149,7 @@ class _SupplierSheetState extends State<_SupplierSheet> {
       showSnack(context, tr('parts.suppliers.saved'));
       Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     }
   }
 
