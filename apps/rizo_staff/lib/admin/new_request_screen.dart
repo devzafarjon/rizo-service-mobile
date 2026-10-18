@@ -52,8 +52,18 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   final _issue = TextEditingController();
   final _address = TextEditingController();
   final _notes = TextEditingController();
+
+  @override
+  void dispose() {
+    _serial.dispose();
+    _issue.dispose();
+    _address.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
   final _signature = GlobalKey<SignaturePadState>();
   bool _ready = false;
+  Object? _loadError;
 
   ApiClient get _api => context.read<StaffSession>().api;
 
@@ -64,6 +74,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   }
 
   Future<void> _loadRefs() async {
+    if (_loadError != null) setState(() => _loadError = null);
     try {
       final results = await Future.wait([_api.get('/api/staff/products'), _api.get('/api/staff/technicians'), _api.get('/api/staff/service-centers').catchError((_) => <String, dynamic>{'centers': []})]);
       if (!mounted) return;
@@ -74,7 +85,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         _ready = true;
       });
     } catch (e) {
-      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
+      if (mounted) setState(() => _loadError = e);
     }
   }
 
@@ -147,7 +158,9 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
     final candidates = technicians.where((t) => t.technicianType == (_onSite ? 'mobile' : techType)).toList();
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('newRequest.title'))),
-      body: !_ready
+      body: _loadError != null
+          ? ErrorView(error: _loadError!, onRetry: _loadRefs)
+          : !_ready
           ? const LoadingView()
           : ListView(padding: const EdgeInsets.all(14), children: [
               SegmentedChoice<String>(value: type, options: {'repair': context.tr('type.repair'), 'installation': context.tr('type.installation')}, onChanged: (v) => setState(() {
@@ -291,6 +304,10 @@ class _CustomerPickerState extends State<_CustomerPicker> {
   @override
   void dispose() {
     _debounce?.cancel();
+    _query.dispose();
+    _name.dispose();
+    _phone.dispose();
+    _address.dispose();
     super.dispose();
   }
 

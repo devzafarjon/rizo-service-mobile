@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
@@ -47,7 +49,7 @@ class _TechHomeState extends State<TechHome> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) repo.refresh(silent: true);
+    if (state == AppLifecycleState.resumed) unawaited(repo.refresh(silent: true));
   }
 
   void _onRepoChange() {
@@ -108,6 +110,14 @@ class _Board extends StatelessWidget {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ChangeNotifierProvider<TechRepository>.value(value: repo, child: JobScreen(jobId: id))));
   }
 
+  Future<void> _refresh(BuildContext context, TechRepository repo) async {
+    try {
+      await repo.refresh();
+    } catch (error) {
+      if (context.mounted) showSnack(context, Translator.I.errorMessage(error), error: true);
+    }
+  }
+
   Widget _scan(BuildContext context) {
     final repo = context.read<TechRepository>();
     return ScanScreen(resolve: (displayId) async {
@@ -129,7 +139,7 @@ class _Board extends StatelessWidget {
     Widget list(String column) {
       final jobs = byColumn[column]!;
       return RefreshIndicator(
-        onRefresh: () => repo.refresh(),
+        onRefresh: () => _refresh(context, repo),
         child: jobs.isEmpty
             ? ListView(children: [Padding(padding: const EdgeInsets.all(40), child: Center(child: Text(context.tr('tech.noJobs'), style: TextStyle(color: Brand.faint))))])
             : ListView.separated(
@@ -154,25 +164,25 @@ class _Board extends StatelessWidget {
         Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => route));
       },
       itemBuilder: (ctx) => [
-        PopupMenuItem(value: 'schedule', child: ListTile(leading: const Icon(Icons.calendar_month_outlined), title: Text(ctx.tr('nav.mySchedule')), contentPadding: EdgeInsets.zero)),
-        PopupMenuItem(value: 'stock', child: ListTile(leading: const Icon(Icons.inventory_2_outlined), title: Text(ctx.tr('nav.myStock')), contentPadding: EdgeInsets.zero)),
-        PopupMenuItem(value: 'skills', child: ListTile(leading: const Icon(Icons.verified_outlined), title: Text(ctx.tr('nav.mySkills')), contentPadding: EdgeInsets.zero)),
-        PopupMenuItem(value: 'earnings', child: ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: Text(ctx.tr('nav.myEarnings')), contentPadding: EdgeInsets.zero)),
-        PopupMenuItem(value: 'settings', child: ListTile(leading: const Icon(Icons.settings_outlined), title: Text(ctx.tr('mobile.settings')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'schedule', child: ListTile(leading: const Icon(Icons.calendar_month_outlined), title: Text(tr('nav.mySchedule')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'stock', child: ListTile(leading: const Icon(Icons.inventory_2_outlined), title: Text(tr('nav.myStock')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'skills', child: ListTile(leading: const Icon(Icons.verified_outlined), title: Text(tr('nav.mySkills')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'earnings', child: ListTile(leading: const Icon(Icons.account_balance_wallet_outlined), title: Text(tr('nav.myEarnings')), contentPadding: EdgeInsets.zero)),
+        PopupMenuItem(value: 'settings', child: ListTile(leading: const Icon(Icons.settings_outlined), title: Text(tr('mobile.settings')), contentPadding: EdgeInsets.zero)),
       ],
     );
 
     final title = Text(context.tr('tech.title'));
     final actionsBar = [
       IconButton(tooltip: context.tr('nav.scan'), onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => _scan(context))), icon: const Icon(Icons.qr_code_scanner)),
-      IconButton(onPressed: repo.loading ? null : () => repo.refresh(), icon: repo.loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.refresh)),
+      IconButton(onPressed: repo.loading ? null : () => _refresh(context, repo), icon: repo.loading ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.refresh)),
       menu,
     ];
 
     if (wide) {
       return Scaffold(
         appBar: AppBar(title: title, actions: actionsBar),
-        body: Column(children: [
+        body: SafeArea(top: false, child: Column(children: [
           const SyncBar(),
           Expanded(
             child: LayoutBuilder(builder: (context, constraints) {
@@ -202,7 +212,7 @@ class _Board extends StatelessWidget {
               return ListView(scrollDirection: Axis.horizontal, children: [...columns, const SizedBox(width: 8)]);
             }),
           ),
-        ]),
+        ])),
       );
     }
 
@@ -220,10 +230,10 @@ class _Board extends StatelessWidget {
             tabs: [for (final c in techColumns) Tab(text: '${context.tr('techColumn.$c')} (${byColumn[c]!.length})')],
           ),
         ),
-        body: Column(children: [
+        body: SafeArea(top: false, child: Column(children: [
           const SyncBar(),
           Expanded(child: TabBarView(children: [for (final c in techColumns) list(c)])),
-        ]),
+        ])),
       ),
     );
   }

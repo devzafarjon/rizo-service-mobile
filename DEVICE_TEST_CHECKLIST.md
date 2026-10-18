@@ -38,7 +38,7 @@ Har bir qadamni bajargach belgilang. Xato topsangiz: qaysi qadam, nima bo'ldi, e
 - [ ] Smeta kelganda push; ilovada tasdiqlash/rad etish ishlaydi.
 - [ ] Ish tugagach baho berish; 1–2 yulduz bo'lsa admin saytda ogohlantirish oladi.
 - [ ] To'lov havolasi (Payme/Click ID kiritilgandan keyin): tugma chiqadi va to'g'ri sahifaga olib boradi.
-- [ ] "Mening mahsulotlarim": kafolat hisoblagichi, kafolat uzaytirish rejasi so'rovi.
+- [ ] "Mening mahsulotlarim": kafolat hisoblagichi, mahsulot bo'yicha xizmatga yozilish.
 - [ ] Yordam markazi: maqolalar (admin avval qo'shishi kerak — hozir bo'sh).
 - [ ] Sozlamalar: aloqa kanali (SMS/Telegram/ikkalasi), ma'lumotni yuklab olish, o'chirish so'rovi (**haqiqiy akkauntda bosmang**).
 - [ ] Yuqoridagi qo'ng'iroqcha (bildirishnomalar) ochiladi, o'qilmaganlar hisoblanadi.

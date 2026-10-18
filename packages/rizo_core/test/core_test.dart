@@ -246,12 +246,24 @@ void main() {
       repo.dispose();
     });
 
+    test('completing a job that was not started is refused on the device', () async {
+      final repo = TechRepository(session());
+      await repo.ready;
+      await repo.refresh();
+      await repo.loadJob('j1');
+      await expectLater(repo.perform('j1', 'complete', {}), throwsA(isA<JobNotStartedError>()));
+      repo.dispose();
+    });
+
     test('completing without photos is refused on the device', () async {
       final repo = TechRepository(session());
       await repo.ready;
       await repo.refresh();
       await repo.loadJob('j1');
-      expect(() => repo.perform('j1', 'complete', {}), throwsA(isA<LocalValidationError>()));
+      online = false;
+      await repo.perform('j1', 'move', {'status': 'diagnosing'});
+      await repo.perform('j1', 'move', {'status': 'in_progress'});
+      await expectLater(repo.perform('j1', 'complete', {}), throwsA(isA<LocalValidationError>()));
       repo.dispose();
     });
 

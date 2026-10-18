@@ -283,7 +283,8 @@ ThemeData buildTheme({bool dark = false}) {
       backgroundColor: p.surfaceAlt,
       selectedColor: p.purpleTint,
       checkmarkColor: p.purple,
-      labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+      // A theme label style replaces the chip's default one, colour included, so the ink has to be set here.
+      labelStyle: TextStyle(color: p.ink, fontWeight: FontWeight.w700, fontSize: 12),
     ),
     navigationBarTheme: NavigationBarThemeData(
       backgroundColor: p.surface,

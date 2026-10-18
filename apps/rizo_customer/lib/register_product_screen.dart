@@ -14,6 +14,13 @@ class _RegisterProductScreenState extends State<RegisterProductScreen> {
   DateTime? purchaseDate;
   final _serial = TextEditingController();
   final _invoice = TextEditingController();
+
+  @override
+  void dispose() {
+    _serial.dispose();
+    _invoice.dispose();
+    super.dispose();
+  }
   bool loading = true;
 
   ApiClient get _api => context.read<CustomerSession>().api;

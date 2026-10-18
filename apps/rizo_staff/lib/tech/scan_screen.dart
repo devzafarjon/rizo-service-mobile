@@ -14,6 +14,12 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   final _manual = TextEditingController();
+
+  @override
+  void dispose() {
+    _manual.dispose();
+    super.dispose();
+  }
   bool _busy = false;
   bool _cameraOk = true;
 

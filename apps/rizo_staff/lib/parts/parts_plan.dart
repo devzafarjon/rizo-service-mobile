@@ -241,7 +241,7 @@ class _WaitingTabState extends State<WaitingTab> {
                         if (r.items.isEmpty)
                           Row(children: [
                             Expanded(child: Text(context.tr('parts.waiting.noItems'), style: TextStyle(color: Brand.red, fontSize: 13, fontWeight: FontWeight.w700))),
-                            FilledButton(onPressed: () => _order(r), child: Text(context.tr('parts.order'))),
+                            FilledButton(style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 14)), onPressed: () => _order(r), child: Text(context.tr('parts.order'))),
                           ])
                         else
                           for (final item in r.items)
@@ -259,7 +259,7 @@ class _WaitingTabState extends State<WaitingTab> {
                                       ),
                                   ]),
                                 ),
-                                if (item.needsOrder) FilledButton(onPressed: () => _order(r, partId: item.partId, quantity: item.uncovered), child: Text(context.tr('parts.order'))),
+                                if (item.needsOrder) FilledButton(style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 14)), onPressed: () => _order(r, partId: item.partId, quantity: item.uncovered), child: Text(context.tr('parts.order'))),
                               ]),
                             ),
                       ]),

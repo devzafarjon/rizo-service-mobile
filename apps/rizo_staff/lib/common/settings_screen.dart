@@ -39,7 +39,7 @@ class SettingsScreen extends StatelessWidget {
                 try {
                   await session.setAvailability(value);
                 } catch (error) {
-                  if (context.mounted) showSnack(context, context.errorText(error), error: true);
+                  if (context.mounted) showSnack(context, Translator.I.errorMessage(error), error: true);
                 }
               },
               title: Text(context.tr('shell.available'), style: const TextStyle(fontWeight: FontWeight.w800)),

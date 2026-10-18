@@ -16,6 +16,8 @@ class TechActions {
         final list = error.missing.map((code) => tr('job.gap.$code')).join(', ');
         showSnack(context, tr('job.stillNeed', params: {'list': list}), error: true);
       }
+    } on JobNotStartedError {
+      if (context.mounted) showSnack(context, tr('job.startFirst'), error: true);
     } catch (error) {
       if (context.mounted) showSnack(context, Translator.I.errorMessage(error), error: true);
     }
@@ -82,6 +84,12 @@ class PauseDialog extends StatefulWidget {
 
 class _PauseDialogState extends State<PauseDialog> {
   final _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
   double _hours = 2;
   static const _choices = [1.0, 2.0, 4.0, 8.0, 24.0, 48.0];
 

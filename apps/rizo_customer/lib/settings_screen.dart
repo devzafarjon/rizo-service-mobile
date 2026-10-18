@@ -29,7 +29,7 @@ class SettingsScreen extends StatelessWidget {
                 try {
                   await session.setChannel(c);
                 } catch (e) {
-                  if (context.mounted) showSnack(context, context.errorText(e), error: true);
+                  if (context.mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
                 }
               },
             ),
@@ -50,9 +50,9 @@ class SettingsScreen extends StatelessWidget {
                 onPressed: () async {
                   try {
                     await session.setDeletionRequested(false);
-                    if (context.mounted) showSnack(context, context.tr('account.deleteCancelled'));
+                    if (context.mounted) showSnack(context, tr('account.deleteCancelled'));
                   } catch (e) {
-                    if (context.mounted) showSnack(context, context.errorText(e), error: true);
+                    if (context.mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
                   }
                 },
                 child: Text(context.tr('account.deleteWithdraw')),
@@ -62,12 +62,12 @@ class SettingsScreen extends StatelessWidget {
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: Brand.red),
                 onPressed: () async {
-                  if (!await confirmDialog(context, context.tr('account.deleteAsk'), body: context.tr('account.deleteConfirm'), confirmLabel: context.tr('account.deleteAsk'))) return;
+                  if (!await confirmDialog(context, tr('account.deleteAsk'), body: tr('account.deleteConfirm'), confirmLabel: tr('account.deleteAsk'))) return;
                   try {
                     await session.setDeletionRequested(true);
-                    if (context.mounted) showSnack(context, context.tr('account.deleteAsked'));
+                    if (context.mounted) showSnack(context, tr('account.deleteAsked'));
                   } catch (e) {
-                    if (context.mounted) showSnack(context, context.errorText(e), error: true);
+                    if (context.mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
                   }
                 },
                 icon: const Icon(Icons.delete_outline),
@@ -77,7 +77,7 @@ class SettingsScreen extends StatelessWidget {
           ]),
         ),
         const SizedBox(height: 12),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Wrap(alignment: WrapAlignment.center, children: [
           TextButton(onPressed: () => openUri(context, Uri.parse('${AppConfig.webUrl}/privacy')), child: Text(context.tr('legal.privacy'))),
           TextButton(onPressed: () => openUri(context, Uri.parse('${AppConfig.webUrl}/terms')), child: Text(context.tr('legal.terms'))),
         ]),

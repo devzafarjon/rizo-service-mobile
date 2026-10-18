@@ -47,6 +47,12 @@ class LocalValidationError implements Exception {
   final List<String> missing;
 }
 
+/// Thrown when a technician tries to finish a job that has not been started yet (the server only allows finishing
+/// from "in progress"), so the device never shows a success it cannot deliver.
+class JobNotStartedError implements Exception {
+  const JobNotStartedError();
+}
+
 /// The technician's data layer: loads jobs from the server, keeps a copy on the device, applies changes right
 /// away and sends them when there is a connection (in the order they were made).
 class TechRepository extends ChangeNotifier {
@@ -88,7 +94,7 @@ class TechRepository extends ChangeNotifier {
   /// Retry from time to time while the app is open.
   void startAutoSync() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 45), (_) => refresh(silent: true));
+    _timer = Timer.periodic(const Duration(seconds: 45), (_) => unawaited(refresh(silent: true)));
   }
 
   @override
@@ -128,13 +134,25 @@ class TechRepository extends ChangeNotifier {
     } on ApiException catch (error) {
       if (error.isRetryable) {
         offline = true;
-      } else if (!error.isAuth) {
+      } else if (!error.isAuth && !silent) {
         rethrow;
       }
+    } catch (_) {
+      // A background sync must never throw into the timer / lifecycle callers.
+      if (!silent) rethrow;
     } finally {
       loading = false;
       _notify();
     }
+  }
+
+  /// Stores a server copy of a job, unless an offline change was queued while the request was in flight
+  /// (the copy would be stale and would wipe the optimistic local figures).
+  Future<bool> _applyServerCopy(String id, Object? data) async {
+    if (hasPending(id)) return false;
+    _work[id] = asMap(data);
+    await _cache.write('job_$id', _work[id]);
+    return true;
   }
 
   /// Keeps the open jobs available offline.
@@ -143,8 +161,7 @@ class TechRepository extends ChangeNotifier {
       if (hasPending(job.id)) continue;
       try {
         final data = await _api.get('/api/staff/my-jobs/${job.id}');
-        _work[job.id] = asMap(data);
-        await _cache.write('job_${job.id}', _work[job.id]);
+        await _applyServerCopy(job.id, data);
       } on ApiException catch (error) {
         if (error.isRetryable) return;
       }
@@ -164,10 +181,8 @@ class TechRepository extends ChangeNotifier {
     if (!hasPending(id)) {
       try {
         final data = await _api.get('/api/staff/my-jobs/$id');
-        _work[id] = asMap(data);
         offline = false;
-        await _cache.write('job_$id', _work[id]);
-        _syncBoardEntry(id);
+        if (await _applyServerCopy(id, data)) _syncBoardEntry(id);
       } on ApiException catch (error) {
         if (!error.isRetryable || _work[id] == null) rethrow;
         offline = true;
@@ -260,6 +275,7 @@ class TechRepository extends ChangeNotifier {
       case 'resolution':
         JobPatch.resolution(payload, type: args['resolutionType'].toString(), productId: args['productId']?.toString(), serial: args['serialNumber']?.toString());
       case 'complete':
+        if (asMap(payload['job'])['status'] != 'in_progress') throw const JobNotStartedError();
         JobPatch.recompute(payload);
         final missing = (payload['missing'] as List).map((e) => e.toString()).toList();
         if (missing.isNotEmpty) throw LocalValidationError(missing);
@@ -291,7 +307,7 @@ class TechRepository extends ChangeNotifier {
       await _saveQueue();
     }
     _notify();
-    unawaited(flush());
+    unawaited(flush().catchError((Object _) {}));
     return JobWork(payload);
   }
 
@@ -423,6 +439,17 @@ class TechRepository extends ChangeNotifier {
           if (op.kind == 'photo') await PhotoStore.delete(op.args['ref'].toString());
           _queue.removeAt(0);
           await _saveQueue();
+        } catch (error) {
+          // An unexpected local error (bad payload, storage). Do not let one operation stall the whole queue.
+          failures.add(SyncFailure(op.displayId, op.kind, Translator.I.errorMessage(error)));
+          touched.add(op.jobId);
+          try {
+            if (op.kind == 'photo') await PhotoStore.delete(op.args['ref'].toString());
+          } catch (_) {}
+          if (_queue.isNotEmpty && identical(_queue.first, op)) _queue.removeAt(0);
+          try {
+            await _saveQueue();
+          } catch (_) {}
         }
       }
     } finally {
@@ -433,9 +460,7 @@ class TechRepository extends ChangeNotifier {
       for (final id in touched) {
         try {
           final data = await _api.get('/api/staff/my-jobs/$id');
-          _work[id] = asMap(data);
-          await _cache.write('job_$id', _work[id]);
-          _syncBoardEntry(id);
+          if (await _applyServerCopy(id, data)) _syncBoardEntry(id);
         } on ApiException {
           break;
         }

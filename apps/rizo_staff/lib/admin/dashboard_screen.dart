@@ -70,17 +70,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (d != null) ...[
             LayoutBuilder(builder: (context, c) {
               final cols = c.maxWidth >= 700 ? 4 : 2;
+              int? deltaFor(String key) => _delta(d.total(key), d.previous?[key] is num ? (d.previous![key] as num).toDouble() : null);
+              final requestsDelta = deltaFor('requests');
+              final revenueDelta = deltaFor('revenue');
+              final profitDelta = deltaFor('profit');
+              // The "change vs the previous period" line takes room only while some tile shows it, and then on every tile,
+              // so all the values sit on the same line.
+              final reserveDelta = requestsDelta != null || revenueDelta != null || profitDelta != null;
               final cards = [
-                _Kpi(context.tr('reports.requests'), formatNumber(d.total('requests')), _delta(d.total('requests'), d.previous?['requests'] is num ? (d.previous!['requests'] as num).toDouble() : null), reserveDelta: true),
-                _Kpi(context.tr('reports.revenue'), formatMoney(d.total('revenue')), _delta(d.total('revenue'), d.previous?['revenue'] is num ? (d.previous!['revenue'] as num).toDouble() : null), reserveDelta: true),
-                _Kpi(context.tr('reports.profit'), formatMoney(d.total('profit')), _delta(d.total('profit'), d.previous?['profit'] is num ? (d.previous!['profit'] as num).toDouble() : null), reserveDelta: true),
-                _Kpi(context.tr('dashboard.avgWork'), formatDurationHours(d.totalOrNull('avgWorkMinutes') == null ? null : d.totalOrNull('avgWorkMinutes')! / 60), null, reserveDelta: true),
-                _Kpi(context.tr('reports.avgHours'), formatDurationHours(d.totalOrNull('avgResolutionHours')), null),
-                _Kpi(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)} (${d.total('ratingCount').round()})', null),
-                _Kpi(context.tr('dashboard.legalOverdue'), formatNumber(d.total('legalOverdue')), null, bad: d.total('legalOverdue') > 0),
-                _Kpi(context.tr('dashboard.debt'), formatMoney(d.total('debt')), null, bad: d.total('debt') > 0),
+                _Kpi(context.tr('reports.requests'), formatNumber(d.total('requests')), requestsDelta, reserveDelta: reserveDelta),
+                _Kpi(context.tr('reports.revenue'), formatMoney(d.total('revenue')), revenueDelta, reserveDelta: reserveDelta),
+                _Kpi(context.tr('reports.profit'), formatMoney(d.total('profit')), profitDelta, reserveDelta: reserveDelta),
+                _Kpi(context.tr('dashboard.avgWork'), formatDurationHours(d.totalOrNull('avgWorkMinutes') == null ? null : d.totalOrNull('avgWorkMinutes')! / 60), null, reserveDelta: reserveDelta),
+                _Kpi(context.tr('reports.avgHours'), formatDurationHours(d.totalOrNull('avgResolutionHours')), null, reserveDelta: reserveDelta),
+                _Kpi(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)} (${d.total('ratingCount').round()})', null, reserveDelta: reserveDelta),
+                _Kpi(context.tr('dashboard.legalOverdue'), formatNumber(d.total('legalOverdue')), null, bad: d.total('legalOverdue') > 0, reserveDelta: reserveDelta),
+                _Kpi(context.tr('dashboard.debt'), formatMoney(d.total('debt')), null, bad: d.total('debt') > 0, reserveDelta: reserveDelta),
               ];
-              final ratio = cols == 2 ? 1.4 : 1.55;
+              // Tiles grow with the user's text size instead of clipping their text.
+              final ratio = (cols == 2 ? 1.4 : 1.55) / MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.8);
               return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 GridView.count(crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: ratio, children: cards),
               ]);

@@ -23,7 +23,7 @@ class _WarehouseListTabState extends State<WarehouseListTab> {
   Widget build(BuildContext context) {
     context.watch<Translator>();
     return ListView(padding: const EdgeInsets.fromLTRB(12, 12, 12, 24), children: [
-      Align(alignment: Alignment.centerRight, child: FilledButton.icon(onPressed: () => _edit(), icon: const Icon(Icons.add, size: 18), label: Text(context.tr('warehouse.new')))),
+      Align(alignment: Alignment.centerRight, child: FilledButton.icon(style: FilledButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: () => _edit(), icon: const Icon(Icons.add, size: 18), label: Text(context.tr('warehouse.new')))),
       const SizedBox(height: 8),
       for (final w in widget.warehouses)
         Card(
@@ -86,6 +86,12 @@ class _WarehouseFormState extends State<_WarehouseForm> {
     for (final c in [_name, _address, _phone, _note, _same, _other]) {
       c.dispose();
     }
+    _name.dispose();
+    _address.dispose();
+    _phone.dispose();
+    _note.dispose();
+    _same.dispose();
+    _other.dispose();
     super.dispose();
   }
 

@@ -55,6 +55,14 @@ class _AutomationScreenState extends State<AutomationScreen> {
   final _percent = TextEditingController();
   final _legal = TextEditingController();
   final _hour = TextEditingController();
+
+  @override
+  void dispose() {
+    _percent.dispose();
+    _legal.dispose();
+    _hour.dispose();
+    super.dispose();
+  }
   String payrollPeriod = 'weekly';
 
   ApiClient get _api => context.read<StaffSession>().api;

@@ -14,6 +14,13 @@ class TrackScreen extends StatefulWidget {
 class _TrackScreenState extends State<TrackScreen> {
   final _id = TextEditingController();
   final _phone = TextEditingController();
+
+  @override
+  void dispose() {
+    _id.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
   final _api = ApiClient();
 
   Future<void> _find() async {

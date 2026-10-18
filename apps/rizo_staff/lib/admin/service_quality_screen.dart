@@ -47,6 +47,7 @@ class _ServiceQualityScreenState extends State<ServiceQualityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.8);
     final d = data;
     final s = d?.service ?? const <String, dynamic>{};
     String pct(Object? v) => v is num ? '$v%' : tr('common.dash');
@@ -65,7 +66,7 @@ class _ServiceQualityScreenState extends State<ServiceQualityScreen> {
           if (loading) const LoadingView(),
           if (error != null && d == null) ErrorView(error: error!, onRetry: _load),
           if (d != null) ...[
-            GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35, children: [
+            GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.35 / textScale, children: [
               _card(context.tr('dashboard.ftf'), pct(ftf), color: ftf is num && ftf < 70 ? Brand.red : Brand.green),
               _card(context.tr('dashboard.callbacks'), pct(s['callbackRate']), color: Brand.orangeText),
               _card(context.tr('dashboard.callbackCost'), formatMoney(asDouble(s['callbackCost'])), color: asDouble(s['callbackCost']) > 0 ? Brand.red : null),
@@ -73,7 +74,7 @@ class _ServiceQualityScreenState extends State<ServiceQualityScreen> {
             ]),
             Padding(padding: const EdgeInsets.only(top: 10), child: Text(context.tr('dashboard.ftfHint'), style: TextStyle(color: Brand.muted, fontSize: 12))),
             const SizedBox(height: 12),
-            GridView.count(crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.95, children: [
+            GridView.count(crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 0.95 / textScale, children: [
               _card(context.tr('reports.requests'), formatNumber(d.total('requests'))),
               _card(context.tr('reports.avgHours'), formatDurationHours(d.totalOrNull('avgResolutionHours'))),
               _card(context.tr('reports.avgRating'), d.totalOrNull('avgRating') == null ? context.tr('common.dash') : '★ ${d.total('avgRating').toStringAsFixed(1)}'),

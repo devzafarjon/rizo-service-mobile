@@ -86,7 +86,7 @@ class _TransfersTabState extends State<TransfersTab> {
           ),
           if (!_out && widget.canAsk) ...[
             const SizedBox(width: 8),
-            FilledButton.icon(onPressed: () async => _done(await showNewRequestSheet(context, toWarehouseId: widget.warehouseId)), icon: const Icon(Icons.add, size: 18), label: Text(context.tr('warehouse.ask'))),
+            FilledButton.icon(style: FilledButton.styleFrom(minimumSize: const Size(0, 44), padding: const EdgeInsets.symmetric(horizontal: 14)), onPressed: () async => _done(await showNewRequestSheet(context, toWarehouseId: widget.warehouseId)), icon: const Icon(Icons.add, size: 18), label: Text(context.tr('warehouse.ask'))),
           ],
         ]),
       ),
@@ -124,9 +124,11 @@ class _TransfersTabState extends State<TransfersTab> {
                                       child: Row(children: [
                                         Icon(Icons.schedule, size: 15, color: Brand.muted),
                                         const SizedBox(width: 4),
-                                        Text(
-                                          [formatDateTime(t.createdAt), if (t.etaAt != null) '${context.tr('parts.expected')}: ${formatDate(t.etaAt!)}'].join(' · '),
-                                          style: TextStyle(color: Brand.muted, fontSize: 13),
+                                        Flexible(
+                                          child: Text(
+                                            [formatDateTime(t.createdAt), if (t.etaAt != null) '${context.tr('parts.expected')}: ${formatDate(t.etaAt!)}'].join(' · '),
+                                            style: TextStyle(color: Brand.muted, fontSize: 13),
+                                          ),
                                         ),
                                         if (t.late) ...[const SizedBox(width: 8), Pill(context.tr('parts.late'), color: Brand.red, background: Brand.redTint)],
                                       ]),

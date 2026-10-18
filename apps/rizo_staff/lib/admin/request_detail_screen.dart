@@ -23,6 +23,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   Object? error;
   bool loading = true;
   bool allowUnpaid = false;
+  int _rev = 0; // bumped on a failed save so the dropdowns snap back to the server value
 
   StaffSession get _session => context.read<StaffSession>();
   ApiClient get _api => _session.api;
@@ -59,7 +60,10 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
       await _load();
       return true;
     } catch (e) {
-      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
+      if (mounted) {
+        showSnack(context, Translator.I.errorMessage(e), error: true);
+        setState(() => _rev++);
+      }
       return false;
     }
   }
@@ -156,7 +160,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
             alignment: Alignment.centerLeft,
             child: TextButton.icon(
               onPressed: () async {
-                final reason = await promptDialog(context, title: context.tr('directory.moveToFront'), hint: context.tr('directory.overrideBody'), label: context.tr('directory.overrideReason'), maxLines: 1);
+                final reason = await promptDialog(context, title: tr('directory.moveToFront'), hint: tr('directory.overrideBody'), label: tr('directory.overrideReason'), maxLines: 1);
                 if (reason != null) await _call(() => _api.post('$_path/queue-override', body: {'reason': reason}), success: tr('directory.overrideDone'));
               },
               icon: const Icon(Icons.vertical_align_top),
@@ -275,6 +279,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         Labeled(
           '${context.tr('common.technician')} (${context.tr('techType.${job.technicianTypeRequired}')})',
           child: DropdownButtonFormField<String?>(
+            key: ValueKey('tech-${job.assignedTechnicianId}-$_rev'),
             initialValue: candidates.any((t) => t.id == job.assignedTechnicianId) ? job.assignedTechnicianId : null,
             isExpanded: true,
             items: [
@@ -287,6 +292,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
         Labeled(
           context.tr('common.priority'),
           child: DropdownButtonFormField<String>(
+            key: ValueKey('prio-${job.priority}-$_rev'),
             initialValue: job.priority,
             items: [for (final p in _priorities) DropdownMenuItem(value: p, child: Text(context.tr('priority.$p')))],
             onChanged: (v) => v == null ? null : _patch({'priority': v}),
@@ -368,21 +374,24 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
     return Section(
       title: context.tr('payments.title'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(children: [
-          for (final (label, value, color) in [
-            (context.tr('payments.due'), summary.due, Brand.ink),
-            (context.tr('payments.paid'), summary.paid, Brand.green),
-            (context.tr('payments.balance'), summary.balance, summary.balance > 0 ? Brand.red : Brand.green),
-          ])
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(right: 6),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(12)),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted)), Text(formatMoney(value), style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 13))]),
+        // A label or amount may wrap on a narrow phone; IntrinsicHeight + stretch keeps the three tiles the same height.
+        IntrinsicHeight(
+          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            for (final (i, (label, value, color)) in [
+              (context.tr('payments.due'), summary.due, Brand.ink),
+              (context.tr('payments.paid'), summary.paid, Brand.green),
+              (context.tr('payments.balance'), summary.balance, summary.balance > 0 ? Brand.red : Brand.green),
+            ].indexed)
+              Expanded(
+                child: Container(
+                  margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(12)),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Brand.muted)), const Spacer(), Text(formatMoney(value), style: TextStyle(fontWeight: FontWeight.w900, color: color, fontSize: 13))]),
+                ),
               ),
-            ),
-        ]),
+          ]),
+        ),
         const SizedBox(height: 10),
         if (payments.isEmpty) Text(context.tr('payments.none'), style: TextStyle(color: Brand.muted)),
         for (final p in payments)
@@ -453,6 +462,12 @@ class _PauseDialog extends StatefulWidget {
 
 class _PauseDialogState extends State<_PauseDialog> {
   final _reason = TextEditingController();
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
   double _hours = 4;
   @override
   Widget build(BuildContext context) {
@@ -471,6 +486,9 @@ class _PauseDialogState extends State<_PauseDialog> {
   }
 }
 
+/// Whole so'm from what the user typed; spaces (also non-breaking) are ignored. Null when it is empty or not a whole number.
+int? _wholeSom(String raw) => int.tryParse(raw.replaceAll(RegExp(r'[\s\u00A0\u202F]'), ''));
+
 class _DecisionForm extends StatefulWidget {
   const _DecisionForm({required this.job, required this.returnReasons, required this.onSubmit});
   final Job job;
@@ -486,12 +504,22 @@ class _DecisionFormState extends State<_DecisionForm> {
   final _reason = TextEditingController();
   final _serial = TextEditingController();
   final _amount = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    _reason.dispose();
+    _serial.dispose();
+    _amount.dispose();
+    super.dispose();
+  }
   String method = 'cash';
   String? returnReasonId;
   bool goodwill = false;
 
   bool get _expired => widget.job.warrantyStatus != 'in_warranty';
-  bool get _valid => decision == 'reject' ? _reason.text.trim().isNotEmpty : (decision == 'warranty_repair' ? (!_expired || goodwill) : true);
+  bool get _refundOk => _amount.text.trim().isEmpty || (_wholeSom(_amount.text) ?? 0) > 0;
+  bool get _valid => decision == 'reject' ? _reason.text.trim().isNotEmpty : (decision == 'warranty_repair' ? (!_expired || goodwill) : (decision == 'refund' ? _refundOk : true));
 
   @override
   Widget build(BuildContext context) {
@@ -514,7 +542,7 @@ class _DecisionFormState extends State<_DecisionForm> {
       if (decision == 'paid_repair') Padding(padding: const EdgeInsets.only(bottom: 10), child: Text(context.tr('decision.paidNext'), style: TextStyle(color: Brand.subtle))),
       if (decision == 'replace') Labeled(context.tr('decision.newSerial'), hint: context.tr('decision.newSerialHint'), child: TextField(controller: _serial)),
       if (decision == 'refund') ...[
-        Labeled(context.tr('decision.refundAmount'), child: TextField(controller: _amount, keyboardType: TextInputType.number)),
+        Labeled(context.tr('decision.refundAmount'), child: TextField(controller: _amount, keyboardType: TextInputType.number, onChanged: (_) => setState(() {}), decoration: InputDecoration(errorText: _refundOk ? null : context.tr('errors.amountWhole')))),
         Labeled(context.tr('payments.method'), child: DropdownButtonFormField<String>(initialValue: method, items: [for (final m in _methods) DropdownMenuItem(value: m, child: Text(context.tr('payments.methods.$m')))], onChanged: (v) => setState(() => method = v ?? 'cash'))),
         Labeled(context.tr('decision.returnReason'), child: DropdownButtonFormField<String?>(initialValue: returnReasonId, isExpanded: true, items: [DropdownMenuItem<String?>(value: null, child: Text(context.tr('common.dash'))), for (final r in widget.returnReasons) DropdownMenuItem<String?>(value: r.id, child: Text('${r.code} · ${r.names.localized(locale)}', overflow: TextOverflow.ellipsis))], onChanged: (v) => setState(() => returnReasonId = v))),
       ],
@@ -530,7 +558,7 @@ class _DecisionFormState extends State<_DecisionForm> {
           if (decision == 'reject') body['rejectionReason'] = _reason.text.trim();
           if (decision == 'replace' && _serial.text.trim().isNotEmpty) body['replacement'] = {'productId': widget.job.product.id, 'serialNumber': _serial.text.trim()};
           if (decision == 'refund') {
-            final amount = double.tryParse(_amount.text.replaceAll(' ', ''));
+            final amount = _wholeSom(_amount.text);
             if (amount != null && amount > 0) body['refundAmount'] = amount;
             body['refundMethod'] = method;
             if (returnReasonId != null) body['returnReasonId'] = returnReasonId;
@@ -554,9 +582,18 @@ class _PaymentForm extends StatefulWidget {
 class _PaymentFormState extends State<_PaymentForm> {
   final _amount = TextEditingController();
   final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _amount.dispose();
+    _note.dispose();
+    super.dispose();
+  }
   late final TextEditingController _fiscal = TextEditingController(text: widget.fiscal ?? '');
   String method = 'cash';
   String kind = 'payment';
+
+  bool get _amountOk => _amount.text.trim().isEmpty || (_wholeSom(_amount.text) ?? 0) > 0;
 
   @override
   Widget build(BuildContext context) {
@@ -566,7 +603,7 @@ class _PaymentFormState extends State<_PaymentForm> {
       Labeled(
         context.tr('payments.amount'),
         child: Row(children: [
-          Expanded(child: TextField(controller: _amount, keyboardType: TextInputType.number, onChanged: (_) => setState(() {}), decoration: InputDecoration(hintText: widget.balance > 0 ? widget.balance.round().toString() : ''))),
+          Expanded(child: TextField(controller: _amount, keyboardType: TextInputType.number, onChanged: (_) => setState(() {}), decoration: InputDecoration(hintText: widget.balance > 0 && kind == 'payment' ? widget.balance.round().toString() : '', errorText: _amountOk ? null : context.tr('errors.amountWhole')))),
           if (widget.balance > 0 && kind == 'payment') Padding(padding: const EdgeInsets.only(left: 8), child: OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size(0, 50)), onPressed: () => setState(() => _amount.text = widget.balance.round().toString()), child: Text(context.tr('payments.fillBalance')))),
         ]),
       ),
@@ -575,10 +612,10 @@ class _PaymentFormState extends State<_PaymentForm> {
       Labeled(context.tr('payments.note'), child: TextField(controller: _note, maxLength: 200)),
       BusyButton(
         label: kind == 'refund' ? context.tr('payments.recordRefund') : context.tr('payments.record'),
-        enabled: (double.tryParse(_amount.text.replaceAll(' ', '')) ?? 0) > 0,
+        enabled: (_wholeSom(_amount.text) ?? 0) > 0,
         onPressed: () async {
           final ok = await widget.onSubmit({
-            'amount': double.parse(_amount.text.replaceAll(' ', '')),
+            'amount': _wholeSom(_amount.text)!,
             'method': method,
             'kind': kind,
             if (_note.text.trim().isNotEmpty) 'note': _note.text.trim(),
@@ -604,6 +641,12 @@ class _NoteForm extends StatefulWidget {
 
 class _NoteFormState extends State<_NoteForm> {
   final _text = TextEditingController();
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
   bool visible = true;
 
   static const _templates = ['ready', 'needParts', 'needCall', 'bringReceipt'];
@@ -611,7 +654,7 @@ class _NoteFormState extends State<_NoteForm> {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Wrap(spacing: 8, runSpacing: 4, children: [for (final key in _templates) ActionChip(label: Text(context.tr('notes.templateNames.$key')), onPressed: () => setState(() => _text.text = context.tr('notes.templates.$key')))]),
+      Wrap(spacing: 8, runSpacing: 4, children: [for (final key in _templates) ActionChip(label: Text(context.tr('notes.templateNames.$key')), onPressed: () => setState(() => _text.text = tr('notes.templates.$key')))]),
       const SizedBox(height: 8),
       TextField(controller: _text, maxLines: 3, minLines: 2, maxLength: 1000, onChanged: (_) => setState(() {}), decoration: InputDecoration(hintText: context.tr('notes.placeholder'))),
       CheckboxListTile(contentPadding: EdgeInsets.zero, controlAffinity: ListTileControlAffinity.leading, value: visible, onChanged: (v) => setState(() => visible = v ?? true), title: Text(context.tr('notes.sendToCustomer'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),

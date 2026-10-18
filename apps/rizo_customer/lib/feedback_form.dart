@@ -19,6 +19,12 @@ class _FeedbackFormState extends State<FeedbackForm> {
   final _comment = TextEditingController();
 
   @override
+  void dispose() {
+    _comment.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final r = widget.request;
     if (r.feedbackRating != null) {

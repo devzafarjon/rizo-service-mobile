@@ -2,13 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:rizo_core/rizo_core.dart';
 
 /// The visit window of a request: confirm it, move it or withdraw the request; also the technician's arrival estimate.
-class VisitCard extends StatelessWidget {
+class VisitCard extends StatefulWidget {
   const VisitCard({super.key, required this.request, required this.api, required this.onChanged});
   final PortalRequest request;
   final ApiClient api;
   final Future<void> Function(Object? response, {String? success}) onChanged;
+  @override
+  State<VisitCard> createState() => _VisitCardState();
+}
 
+class _VisitCardState extends State<VisitCard> {
+  bool _busy = false;
+
+  PortalRequest get request => widget.request;
+  ApiClient get api => widget.api;
+  Future<void> Function(Object? response, {String? success}) get onChanged => widget.onChanged;
   String get _path => '/api/customer/requests/${request.id}';
+
+  /// One action at a time: a second tap while the first is in flight would book, confirm or cancel twice.
+  Future<void> _guard(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   Future<void> _book(BuildContext context) async {
     final scheduled = request.scheduledAt?.toLocal();
@@ -17,12 +37,12 @@ class VisitCard extends StatelessWidget {
       initialDate: scheduled == null ? null : '${scheduled.year.toString().padLeft(4, '0')}-${scheduled.month.toString().padLeft(2, '0')}-${scheduled.day.toString().padLeft(2, '0')}',
       loadSlots: (date) async => asList(asMap(await api.get('/api/customer/visit-slots', query: {'date': date, 'requestId': request.id})) ['slots']).map(VisitSlot.new).toList(),
     );
-    if (choice == null || !context.mounted) return;
+    if (choice == null || !mounted) return;
     final saved = tr('visit.saved');
     try {
       await onChanged(await api.post('$_path/visit', body: {'date': choice.date, 'slot': choice.slot}), success: saved);
     } catch (e) {
-      if (context.mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
+      if (mounted) showSnack(this.context, Translator.I.errorMessage(e), error: true);
     }
   }
 
@@ -52,30 +72,34 @@ class VisitCard extends StatelessWidget {
             if (scheduled != null && !visit.confirmed)
               FilledButton(
                 style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-                onPressed: () async {
-                  final note = context.tr('visit.confirmedNote');
-                  try {
-                    await onChanged(await api.post('$_path/visit/confirm'), success: note);
-                  } catch (e) {
-                    if (context.mounted) showSnack(context, context.errorText(e), error: true);
-                  }
-                },
+                onPressed: _busy
+                    ? null
+                    : () => _guard(() async {
+                          final note = tr('visit.confirmedNote');
+                          try {
+                            await onChanged(await api.post('$_path/visit/confirm'), success: note);
+                          } catch (e) {
+                            if (mounted) showSnack(this.context, Translator.I.errorMessage(e), error: true);
+                          }
+                        }),
                 child: Text(context.tr('visit.confirmButton')),
               ),
             if (canMove)
-              OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: () => _book(context), child: Text(scheduled != null ? context.tr('visit.move') : context.tr('visit.book'))),
+              OutlinedButton(style: OutlinedButton.styleFrom(minimumSize: const Size(0, 44)), onPressed: _busy ? null : () => _guard(() => _book(context)), child: Text(scheduled != null ? context.tr('visit.move') : context.tr('visit.book'))),
             if (visit.canCancel)
               TextButton(
                 style: TextButton.styleFrom(foregroundColor: Brand.red, minimumSize: const Size(0, 44)),
-                onPressed: () async {
-                  final done = context.tr('visit.cancelled');
-                  if (!await confirmDialog(context, context.tr('visit.cancelRequest'), body: context.tr('visit.cancelConfirm'), confirmLabel: context.tr('visit.cancelRequest'))) return;
-                  try {
-                    await onChanged(await api.post('$_path/cancel', body: {'reason': ''}), success: done);
-                  } catch (e) {
-                    if (context.mounted) showSnack(context, context.errorText(e), error: true);
-                  }
-                },
+                onPressed: _busy
+                    ? null
+                    : () => _guard(() async {
+                          final done = tr('visit.cancelled');
+                          if (!await confirmDialog(context, tr('visit.cancelRequest'), body: tr('visit.cancelConfirm'), confirmLabel: tr('visit.cancelRequest'))) return;
+                          try {
+                            await onChanged(await api.post('$_path/cancel', body: {'reason': ''}), success: done);
+                          } catch (e) {
+                            if (mounted) showSnack(this.context, Translator.I.errorMessage(e), error: true);
+                          }
+                        }),
                 child: Text(context.tr('visit.cancelRequest')),
               ),
           ]),
@@ -107,7 +131,7 @@ class _PayCardState extends State<PayCard> {
   @override
   void didUpdateWidget(PayCard old) {
     super.didUpdateWidget(old);
-    if (old.request.payment.balance != widget.request.payment.balance) _load();
+    if (old.request.id != widget.request.id || old.request.status != widget.request.status || old.request.payment.balance != widget.request.payment.balance) _load();
   }
 
   Future<void> _load() async {
@@ -118,7 +142,9 @@ class _PayCardState extends State<PayCard> {
     try {
       final data = asMap(await widget.api.get('/api/customer/requests/${widget.request.id}/pay-links'));
       if (mounted) setState(() => links = data);
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) setState(() => links = null);
+    }
   }
 
   @override

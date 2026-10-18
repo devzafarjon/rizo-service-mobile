@@ -19,6 +19,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   Json? data;
   Object? error;
   bool loading = true;
+  int _seq = 0; // only the newest filter's answer may land
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   }
 
   Future<void> _load() async {
+    final mine = ++_seq;
     setState(() {
       loading = data == null;
       error = null;
@@ -37,11 +39,11 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         ..._bands[band]!,
         if (onlyComments) 'withComment': '1',
       });
-      if (mounted) setState(() => data = asMap(r));
+      if (mounted && mine == _seq) setState(() => data = asMap(r));
     } catch (e) {
-      if (mounted) setState(() => error = e);
+      if (mounted && mine == _seq) setState(() => error = e);
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted && mine == _seq) setState(() => loading = false);
     }
   }
 
@@ -140,7 +142,7 @@ class _Stat extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label.toUpperCase(), maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: Brand.muted, fontSize: 10, fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
-          Text(value, style: TextStyle(color: Brand.purple, fontSize: 18, fontWeight: FontWeight.w900)),
+          FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: Text(value, style: TextStyle(color: Brand.purple, fontSize: 18, fontWeight: FontWeight.w900))),
         ]),
       ),
     );
@@ -202,7 +204,7 @@ class _FeedbackCard extends StatelessWidget {
               const SizedBox(width: 6),
               Text('$rating / 5', style: const TextStyle(fontWeight: FontWeight.w900)),
               const Spacer(),
-              Text(formatDateTime(DateTime.tryParse(asString(row['createdAt']))?.toLocal()), style: TextStyle(color: Brand.faint, fontSize: 12)),
+              Flexible(child: Text(formatDateTime(DateTime.tryParse(asString(row['createdAt']))?.toLocal()), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: Brand.faint, fontSize: 12))),
             ]),
             const SizedBox(height: 8),
             Text(comment.isEmpty ? context.tr('reports.feedback.noComment') : comment, style: TextStyle(fontSize: 14, color: comment.isEmpty ? Brand.faint : Brand.ink)),

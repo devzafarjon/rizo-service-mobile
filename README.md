@@ -28,7 +28,7 @@ the offline queue.
 
 ## Running it
 
-Flutter 3.35 or newer (the project was built with 3.47). From the repo folder:
+Flutter 3.47 or newer (Dart 3.13.5 or newer). From the repo folder:
 
 ```bash
 cd apps/rizo_staff          # or apps/rizo_customer

@@ -127,6 +127,11 @@ class _SupplierSheetState extends State<_SupplierSheet> {
     for (final c in [_name, _phone, _telegram, _lead, _note]) {
       c.dispose();
     }
+    _name.dispose();
+    _phone.dispose();
+    _telegram.dispose();
+    _lead.dispose();
+    _note.dispose();
     super.dispose();
   }
 

@@ -40,6 +40,13 @@ class _AddDeviceSheet extends StatefulWidget {
 class _AddDeviceSheetState extends State<_AddDeviceSheet> {
   final _brand = TextEditingController();
   final _model = TextEditingController();
+
+  @override
+  void dispose() {
+    _brand.dispose();
+    _model.dispose();
+    super.dispose();
+  }
   List<DirBrand> brands = [];
   List<String> categories = [];
   String? category;

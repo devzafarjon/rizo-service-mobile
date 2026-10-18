@@ -40,6 +40,14 @@ class _EstimateBuilderState extends State<EstimateBuilder> {
   final _customName = TextEditingController();
   final _customPrice = TextEditingController();
 
+  @override
+  void dispose() {
+    _note.dispose();
+    _customName.dispose();
+    _customPrice.dispose();
+    super.dispose();
+  }
+
   double get _total => _lines.where((l) => !l.optional).fold(0, (s, l) => s + l.quantity * l.unitPrice);
   double get _optionalTotal => _lines.where((l) => l.optional).fold(0, (s, l) => s + l.quantity * l.unitPrice);
 
@@ -79,11 +87,12 @@ class _EstimateBuilderState extends State<EstimateBuilder> {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Row(children: [
-        Expanded(child: OutlinedButton.icon(onPressed: widget.services.isEmpty ? null : () => _pick(widget.services, 'service'), icon: const Icon(Icons.build_outlined, size: 18), label: Text(context.tr('estimate.addService'), overflow: TextOverflow.ellipsis))),
+      // Labels may wrap to two lines on a phone; IntrinsicHeight keeps the two buttons the same height when only one wraps.
+      IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        Expanded(child: OutlinedButton.icon(onPressed: widget.services.isEmpty ? null : () => _pick(widget.services, 'service'), icon: const Icon(Icons.build_outlined, size: 18), label: Text(context.tr('estimate.addService'), textAlign: TextAlign.center))),
         const SizedBox(width: 8),
-        Expanded(child: OutlinedButton.icon(onPressed: widget.parts.isEmpty ? null : () => _pick(widget.parts, 'part'), icon: const Icon(Icons.settings_input_component_outlined, size: 18), label: Text(context.tr('estimate.addPart'), overflow: TextOverflow.ellipsis))),
-      ]),
+        Expanded(child: OutlinedButton.icon(onPressed: widget.parts.isEmpty ? null : () => _pick(widget.parts, 'part'), icon: const Icon(Icons.settings_input_component_outlined, size: 18), label: Text(context.tr('estimate.addPart'), textAlign: TextAlign.center))),
+      ])),
       const SizedBox(height: 10),
       Row(children: [
         Expanded(flex: 3, child: TextField(controller: _customName, decoration: InputDecoration(hintText: context.tr('estimate.customName')))),
@@ -163,9 +172,9 @@ class EstimateCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(color: Brand.surfaceSoft, borderRadius: BorderRadius.circular(14), border: Border.all(color: Brand.border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
+        // Status pill and expiry date share a row on wide screens and wrap onto two lines on a phone (a plain Row overflowed there).
+        Wrap(alignment: WrapAlignment.spaceBetween, crossAxisAlignment: WrapCrossAlignment.center, spacing: 8, runSpacing: 6, children: [
           Pill(context.tr('estimate.status.${estimate.status}'), color: approved ? Brand.green : (estimate.status == 'declined' || estimate.status == 'expired' ? Brand.red : Brand.purple), background: approved ? Brand.greenTint : (estimate.status == 'declined' || estimate.status == 'expired' ? Brand.redTint : Brand.purpleTint)),
-          const Spacer(),
           if (estimate.validUntil != null && estimate.status == 'sent') Text('${context.tr('estimate.validUntil')} ${formatStamp(estimate.validUntil)}', style: TextStyle(fontSize: 11, color: Brand.muted)),
         ]),
         if (estimate.note != null && estimate.note!.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(estimate.note!, style: const TextStyle(fontSize: 13))),

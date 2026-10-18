@@ -56,6 +56,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     _debounce?.cancel();
     _poll?.cancel();
     _chips.dispose();
+    _search.dispose();
     super.dispose();
   }
 
@@ -64,7 +65,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
   Future<void> _load({bool silent = false}) async {
     if (!silent) setState(() => loading = jobs.isEmpty);
     try {
-      final result = asMap(await _session.api.get('/api/staff/requests', query: {'q': _search.text.trim(), 'type': type, 'limit': _pageSize, 'offset': 0}));
+      final result = asMap(await _session.api.get('/api/staff/requests', query: _query(0)));
       final fresh = asList(result['requests']).map(Job.new).toList();
       if (mounted) {
         setState(() {
@@ -84,13 +85,41 @@ class _RequestsScreenState extends State<RequestsScreen> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+    unawaited(_fillFilter());
+  }
+
+  /// Filters the server can apply itself are sent with the request, so a chip never hides rows that sit on a later page.
+  /// The multi-status chips (open, working, waiting, done) are narrowed on the device, see [_fillFilter].
+  Map<String, dynamic> _query(int offset) => {
+        'q': _search.text.trim(),
+        'type': type,
+        'limit': _pageSize,
+        'offset': offset,
+        ...switch (filter) {
+          'new' => {'status': 'new'},
+          'decision' => {'status': 'awaiting_decision'},
+          'ready' => {'status': 'ready'},
+          'overdue' => {'overdue': '1'},
+          'legal' => {'legal': '1'},
+          'unassigned' => {'technicianId': 'unassigned'},
+          _ => const <String, String>{},
+        },
+      };
+
+  /// A device-side filter on a paged list can look empty while matches wait on the next pages: keep loading until
+  /// the chip shows a screenful or the list ends.
+  Future<void> _fillFilter() async {
+    var guard = 0;
+    while (mounted && hasMore && !loadingMore && jobs.where(_match).length < 12 && guard++ < 12) {
+      await _loadMore();
+    }
   }
 
   Future<void> _loadMore() async {
     if (loadingMore) return;
     setState(() => loadingMore = true);
     try {
-      final result = asMap(await _session.api.get('/api/staff/requests', query: {'q': _search.text.trim(), 'type': type, 'limit': _pageSize, 'offset': jobs.length}));
+      final result = asMap(await _session.api.get('/api/staff/requests', query: _query(jobs.length)));
       final more = asList(result['requests']).map(Job.new).toList();
       if (mounted) {
         setState(() {
@@ -154,7 +183,10 @@ class _RequestsScreenState extends State<RequestsScreen> {
             for (final f in _filters)
               Padding(
                 padding: const EdgeInsets.only(right: 8, top: 6, bottom: 6),
-                child: ChoiceChip(label: Text(context.tr('mobile.filter.$f')), selected: filter == f, onSelected: (_) => setState(() => filter = f)),
+                child: ChoiceChip(label: Text(context.tr('mobile.filter.$f')), selected: filter == f, onSelected: (_) {
+                  setState(() => filter = f);
+                  _load();
+                }),
               ),
             const VerticalDivider(width: 12),
             for (final t in const ['repair', 'installation'])

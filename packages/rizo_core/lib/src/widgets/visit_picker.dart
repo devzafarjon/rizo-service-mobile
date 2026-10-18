@@ -77,7 +77,7 @@ class _VisitSheetState extends State<_VisitSheet> {
     } catch (e) {
       if (mounted) setState(() => error = e);
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted && date == day) setState(() => loading = false);
     }
   }
 
@@ -86,7 +86,7 @@ class _VisitSheetState extends State<_VisitSheet> {
     context.watch<Translator>();
     final anyFree = slots.any((s) => s.free);
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(20, 4, 20, 20 + MediaQuery.viewInsetsOf(context).bottom),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(context.tr('visit.book'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),

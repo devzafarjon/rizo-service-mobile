@@ -92,7 +92,7 @@ class _JobScreenState extends State<JobScreen> {
     final left = <Widget>[
       _header(data),
       _timeline(data),
-      if (repair && !done) _workflow(data),
+      if (!done) _workflow(data),
       if (repair) _defect(data, done),
       if (repair) _estimate(data, done),
       if (!data.checklist.isEmpty) _checklist(data, repair, done),
@@ -159,18 +159,19 @@ class _JobScreenState extends State<JobScreen> {
   Widget _workflow(JobWork data) {
     final job = data.job;
     final buttons = <Widget>[];
-    if (job.status == 'new') buttons.add(FilledButton(onPressed: _busy ? null : () => _do(() => _actions.status(job, 'diagnosing')), child: Text(context.tr('tech.startDiagnosis'))));
+    // Installations skip diagnosis: the server only lets them go new → in_progress.
+    if (job.status == 'new') buttons.add(FilledButton(onPressed: _busy ? null : () => _do(() => _actions.start(job)), child: Text(job.isRepair ? context.tr('tech.startDiagnosis') : context.tr('tech.start'))));
     if (job.status == 'diagnosing' || job.status == 'awaiting_parts') {
       buttons.add(FilledButton(onPressed: _busy ? null : () => _do(() => _actions.status(job, 'in_progress')), child: Text(job.status == 'awaiting_parts' ? context.tr('tech.partsArrived') : context.tr('tech.startRepair'))));
     }
-    if (job.status == 'diagnosing' || job.status == 'in_progress') {
+    if (job.isRepair && (job.status == 'diagnosing' || job.status == 'in_progress')) {
       buttons.add(OutlinedButton(onPressed: _busy ? null : () => _do(() => _actions.status(job, 'awaiting_parts')), child: Text(context.tr('tech.needParts'))));
     }
     if (job.status == 'paused') buttons.add(FilledButton(onPressed: _busy ? null : () => _do(() => _actions.status(job, 'in_progress')), child: Text(context.tr('tech.resume'))));
     if (job.status != 'paused' && job.status != 'awaiting_decision') buttons.add(OutlinedButton(onPressed: _busy ? null : () => _do(() => _actions.pause(job)), child: Text(context.tr('tech.pause'))));
     return Section(
       title: context.tr('tech.workflow'),
-      hint: context.tr('tech.workflowHint'),
+      hint: context.tr(job.isRepair ? 'tech.workflowHint' : 'tech.workflowHintInstall'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Wrap(spacing: 6, children: [StatusChip(job.status), if (data.decision != null) Pill(context.tr('decision.${data.decision}'))]),
         if (job.status == 'awaiting_decision') Container(margin: const EdgeInsets.only(top: 10), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Brand.amberTint, borderRadius: BorderRadius.circular(12)), child: Text(context.tr('tech.waitingDecision'), style: TextStyle(color: Brand.amberText, fontWeight: FontWeight.w800))),
@@ -206,7 +207,7 @@ class _JobScreenState extends State<JobScreen> {
       allowDraft: false,
       onSubmit: (lines, note, send) async {
         await _perform('estimate', {'lines': lines, 'note': note, 'send': send});
-        if (mounted) showSnack(context, context.tr(send ? 'estimate.sent' : 'estimate.saved'));
+        if (mounted) showSnack(context, tr(send ? 'estimate.sent' : 'estimate.saved'));
       },
     );
     return Section(
@@ -348,7 +349,7 @@ class _JobScreenState extends State<JobScreen> {
                       _perform('checklist', {'kind': kind, 'checked': next.toList()});
                     },
               title: Text(item.text(locale), style: const TextStyle(fontWeight: FontWeight.w700)),
-              secondary: item.required ? Pill(context.tr('checklists.required'), color: Brand.purple, background: Brand.purpleTint) : null,
+              secondary: repair && item.required ? Pill(context.tr('checklists.required'), color: Brand.purple, background: Brand.purpleTint) : null,
             ),
           ),
       ]);
@@ -356,7 +357,7 @@ class _JobScreenState extends State<JobScreen> {
 
     return Section(
       title: context.tr('checklist.title'),
-      hint: context.tr('checklist.hint'),
+      hint: context.tr(repair ? 'checklist.hint' : 'checklist.hintInstall'),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (repair && list.diagnosis.isNotEmpty) group('diagnosis', list.diagnosis, list.diagnosisChecked),
         if (list.completion.isNotEmpty) group('completion', list.completion, list.completionChecked),
@@ -490,16 +491,20 @@ class _JobScreenState extends State<JobScreen> {
   Widget _completeBar(JobWork data) {
     final missing = data.missing;
     final list = missing.map((code) => tr('job.gap.$code')).join(', ');
+    final started = data.job.status == 'in_progress'; // the server lets a technician finish only from "in progress"
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
         decoration: BoxDecoration(color: Brand.surface, border: Border(top: BorderSide(color: Brand.border))),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (missing.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(context.tr('job.stillNeed', params: {'list': list}), textAlign: TextAlign.center, style: TextStyle(color: Brand.orangeText, fontSize: 12, fontWeight: FontWeight.w800))),
+          if (!started)
+            Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(context.tr('job.startFirst'), textAlign: TextAlign.center, style: TextStyle(color: Brand.orangeText, fontSize: 12, fontWeight: FontWeight.w800)))
+          else if (missing.isNotEmpty)
+            Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(context.tr('job.stillNeed', params: {'list': list}), textAlign: TextAlign.center, style: TextStyle(color: Brand.orangeText, fontSize: 12, fontWeight: FontWeight.w800))),
           BusyButton(
             label: context.tr('job.completeAmount', params: {'amount': formatMoney(data.costValue('chargedTotal'))}),
             icon: Icons.check_circle_outline,
-            enabled: missing.isEmpty && !_busy,
+            enabled: started && missing.isEmpty && !_busy,
             onPressed: () async {
               final result = await _actions.complete(data.job);
               if (result != null && mounted) {
@@ -527,6 +532,13 @@ class _ExtraFormState extends State<_ExtraForm> {
   final _price = TextEditingController();
 
   @override
+  void dispose() {
+    _description.dispose();
+    _price.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!_open) return OutlinedButton.icon(onPressed: () => setState(() => _open = true), icon: const Icon(Icons.add), label: Text(context.tr('detail.extras')));
     return Container(
@@ -542,9 +554,14 @@ class _ExtraFormState extends State<_ExtraForm> {
             child: BusyButton(
               label: context.tr('job.saveExpense'),
               onPressed: () async {
-                final price = double.tryParse(_price.text.replaceAll(' ', ''));
-                if (_description.text.trim().isEmpty || price == null || price < 0) return;
-                await widget.onAdd(_description.text.trim(), price);
+                final raw = _price.text.replaceAll(RegExp(r'\s'), '');
+                final price = int.tryParse(raw);
+                if (_description.text.trim().isEmpty) return;
+                if (price == null || price < 0) {
+                  showSnack(context, tr('errors.amountWhole'), error: true);
+                  return;
+                }
+                await widget.onAdd(_description.text.trim(), price.toDouble());
                 if (mounted) {
                   _description.clear();
                   _price.clear();

@@ -37,6 +37,7 @@ class _RequestDetailScreenState extends State<RequestDetailScreen> {
   @override
   void dispose() {
     _poll?.cancel();
+    _message.dispose();
     super.dispose();
   }
 

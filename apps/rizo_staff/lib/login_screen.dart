@@ -14,8 +14,18 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _needCode = false;
   bool _obscure = true;
   String? _error;
+  bool _submitting = false; // the Enter key bypasses the button's own busy guard
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _password.dispose();
+    _code.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     final phone = _phone.text.trim();
     final password = _password.text;
     if (phone.isEmpty || password.isEmpty) {
@@ -23,6 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
     setState(() => _error = null);
+    _submitting = true;
     try {
       final user = await context.read<StaffSession>().login(phone, password, code: _needCode ? _code.text.trim() : null);
       if (user.role == 'customer') return;
@@ -37,6 +48,8 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       setState(() => _error = Translator.I.errorMessage(error));
+    } finally {
+      _submitting = false;
     }
   }
 

@@ -249,7 +249,7 @@ class PhotoPickerBar extends StatelessWidget {
       if (files.isEmpty) return;
       await onPicked([for (final f in files) await f.readAsBytes()]);
     } catch (_) {
-      if (context.mounted) showSnack(context, context.tr('errors.uploadFailed'), error: true);
+      if (context.mounted) showSnack(context, tr('errors.uploadFailed'), error: true);
     }
   }
 

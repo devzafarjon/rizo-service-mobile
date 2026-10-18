@@ -27,6 +27,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _password.dispose();
+    super.dispose();
+  }
   bool _obscure = true;
   String? _error;
 
@@ -67,9 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_error != null) Padding(padding: const EdgeInsets.only(bottom: 12), child: Text(_error!, style: TextStyle(color: Brand.red, fontWeight: FontWeight.w700))),
       BusyButton(label: context.tr('common.signIn'), onPressed: _submit),
       const SizedBox(height: 8),
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Flexible(child: TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ForgotScreen())), child: Text(context.tr('mobile.forgot'), overflow: TextOverflow.ellipsis))),
-        Flexible(child: TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SignupScreen())), child: Text(context.tr('mobile.signup'), overflow: TextOverflow.ellipsis))),
+      Wrap(alignment: WrapAlignment.spaceBetween, children: [
+        TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ForgotScreen())), child: Text(context.tr('mobile.forgot'))),
+        TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const SignupScreen())), child: Text(context.tr('mobile.signup'))),
       ]),
       const Divider(height: 28),
       OutlinedButton.icon(onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const TrackScreen())), icon: const Icon(Icons.search), label: Text(context.tr('home.track'))),
@@ -92,6 +99,15 @@ class _SignupScreenState extends State<SignupScreen> {
   final _phone = TextEditingController();
   final _password = TextEditingController();
   final _address = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    _password.dispose();
+    _address.dispose();
+    super.dispose();
+  }
   String? _error;
 
   Future<void> _submit() async {
@@ -131,6 +147,12 @@ class ForgotScreen extends StatefulWidget {
 
 class _ForgotScreenState extends State<ForgotScreen> {
   final _phone = TextEditingController();
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    super.dispose();
+  }
   bool _sent = false;
   String? _error;
 

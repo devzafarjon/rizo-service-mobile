@@ -17,6 +17,12 @@ class _CustomerEstimateCardState extends State<CustomerEstimateCard> {
   bool declining = false;
   final _reason = TextEditingController();
 
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
   double get _total => widget.estimate.lines.where((l) => !l.isOptional || chosen.contains(l.id)).fold(0, (s, l) => s + l.quantity * l.unitPrice);
 
   @override

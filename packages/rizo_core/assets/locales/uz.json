@@ -848,6 +848,7 @@
     "diagnosisHint": "Diagnostika natijasiga ko‘ra nosozlik kodini tanlang.",
     "workflow": "Ish jarayoni",
     "workflowHint": "Diagnostika → smeta → ta’mir. Mijoz qarori kerak bo‘lsa, ish kutish holatiga o‘tadi.",
+    "workflowHintInstall": "O‘rnatish: boshlang → ishni bajaring → rasm va xizmatni qo‘shing → yakunlang.",
     "etaTitle": "Qancha vaqtda yetib borasiz?",
     "etaHint": "{{name}} yo‘lga chiqqaningiz haqida xabar oladi va taxminiy vaqtni ko‘radi.",
     "etaMinutes": "{{minutes}} daqiqa",
@@ -879,11 +880,12 @@
     "addExtra": "Xarajat qo‘shish",
     "photos": "Rasmlar",
     "photosHint": "Majburiy · kameradan yoki galereyadan bir nechtasini qo‘shing",
-    "addPhotos": "Rasm qo‘shish",
+    "addPhotos": "Galereya",
     "servicesCovered": "Kafolat qoplagan",
     "toCharge": "To‘lanadigan summa",
     "completeJob": "Ishni yakunlash",
     "completeAmount": "Ishni yakunlash · {{amount}}",
+    "startFirst": "Avval ishni boshlang",
     "completed": "Ish yakunlandi",
     "completedCovered": "Ish yakunlandi — kafolat qoplagan",
     "completeFailed": "Bu ishni yakunlab bo‘lmadi",
@@ -2110,6 +2112,7 @@
   "checklist": {
     "title": "Tekshiruv ro‘yxati",
     "hint": "Majburiy bandlarni belgilamaguncha ishni yakunlab bo‘lmaydi.",
+    "hintInstall": "Bu ro‘yxat eslatma sifatida — o‘rnatish ishini yakunlashga to‘sqinlik qilmaydi.",
     "diagnosis": "Diagnostika",
     "completion": "Yakunlashdan oldin"
   },
@@ -2292,7 +2295,7 @@
         },
         {
           "h": "Kafolat",
-          "p": "Kafolat mahsulot shartlariga ko‘ra, odatda o‘rnatilgan kundan boshlab hisoblanadi. Kafolat uzaytirish rejalari pullik bo‘lib, to‘lov qabul qilingandan keyin kuchga kiradi. Qonunda belgilangan ta‘mirlash muddatlari saqlanadi."
+          "p": "Kafolat mahsulot shartlariga ko‘ra, sotilgan yoki o‘rnatilgan kundan boshlab hisoblanadi. Kafolat muddatini uzaytirib bo‘lmaydi. Qonunda belgilangan ta‘mirlash muddatlari saqlanadi."
         },
         {
           "h": "Tashrif va uni o‘zgartirish",

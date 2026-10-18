@@ -848,6 +848,7 @@
     "diagnosisHint": "Pick the defect code from your diagnosis.",
     "workflow": "Workflow",
     "workflowHint": "Diagnosis → estimate → repair. If the customer must decide, the job waits.",
+    "workflowHintInstall": "Installation: start → do the work → add photos and services → finish.",
     "etaTitle": "How long will the trip take?",
     "etaHint": "{{name}} will be told you are on the way and sees the estimate.",
     "etaMinutes": "{{minutes}} min",
@@ -879,11 +880,12 @@
     "addExtra": "Add expense",
     "photos": "Photos",
     "photosHint": "Required · add several at once from the camera or gallery",
-    "addPhotos": "Add photos",
+    "addPhotos": "Gallery",
     "servicesCovered": "Covered by warranty",
     "toCharge": "Amount to charge",
     "completeJob": "Complete job",
     "completeAmount": "Complete job · {{amount}}",
+    "startFirst": "Start the job first",
     "completed": "Job completed",
     "completedCovered": "Job completed — covered by warranty",
     "completeFailed": "Could not complete this job",
@@ -2110,6 +2112,7 @@
   "checklist": {
     "title": "Checklist",
     "hint": "The job cannot be completed until the required items are ticked.",
+    "hintInstall": "This list is a reminder — it does not block finishing an installation.",
     "diagnosis": "Diagnosis",
     "completion": "Before completing"
   },
@@ -2292,7 +2295,7 @@
         },
         {
           "h": "Warranty",
-          "p": "The warranty follows the product's terms and usually runs from the installation date. Warranty extension plans are paid and take effect once the payment is accepted. The repair deadlines set by law are kept."
+          "p": "The warranty follows the product's terms and runs from the date of sale or installation. A warranty cannot be extended. The repair deadlines set by law are kept."
         },
         {
           "h": "Visits and changes",

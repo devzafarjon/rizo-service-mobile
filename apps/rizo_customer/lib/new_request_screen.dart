@@ -30,7 +30,16 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   final _issue = TextEditingController();
   final _serial = TextEditingController();
   final _address = TextEditingController();
+
+  @override
+  void dispose() {
+    _issue.dispose();
+    _serial.dispose();
+    _address.dispose();
+    super.dispose();
+  }
   bool ready = false;
+  Object? loadError;
 
   ApiClient get _api => context.read<CustomerSession>().api;
   bool get _onSite => locationType == 'on_site' || type == 'installation';
@@ -43,6 +52,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
   }
 
   Future<void> _load() async {
+    if (loadError != null) setState(() => loadError = null);
     try {
       final results = await Future.wait([_api.get('/api/customer/sales'), _api.get('/api/customer/products'), _api.get('/api/public/centers').catchError((_) => <String, dynamic>{'centers': []})]);
       if (!mounted) return;
@@ -58,7 +68,7 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
         ready = true;
       });
     } catch (e) {
-      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
+      if (mounted) setState(() => loadError = e);
     }
   }
 
@@ -106,7 +116,9 @@ class _NewRequestScreenState extends State<NewRequestScreen> {
     final locale = context.watch<Translator>().locale;
     return Scaffold(
       appBar: AppBar(title: Text(context.tr('portal.newTitle'))),
-      body: !ready
+      body: loadError != null
+          ? ErrorView(error: loadError!, onRetry: _load)
+          : !ready
           ? const LoadingView()
           : Column(children: [
               LinearProgressIndicator(value: (step + 1) / 3, minHeight: 4, color: Brand.purple, backgroundColor: Brand.purpleTint),

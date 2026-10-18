@@ -81,7 +81,7 @@ class _TelegramCardState extends State<TelegramCard> with WidgetsBindingObserver
     try {
       await action();
     } catch (e) {
-      if (mounted) showSnack(context, context.errorText(e), error: true);
+      if (mounted) showSnack(context, Translator.I.errorMessage(e), error: true);
     } finally {
       if (mounted) setState(() => busy = false);
     }

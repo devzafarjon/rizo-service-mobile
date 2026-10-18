@@ -50,8 +50,10 @@ abstract class AuthSession<U> extends ChangeNotifier {
     } catch (_) {
       token = null;
     }
-    final prefs = await SharedPreferences.getInstance();
-    final cached = prefs.getString(_userKey);
+    String? cached;
+    try {
+      cached = (await SharedPreferences.getInstance()).getString(_userKey);
+    } catch (_) {}
     if (token != null && cached != null) {
       try {
         user = parseUser(jsonDecode(cached));
@@ -78,6 +80,13 @@ abstract class AuthSession<U> extends ChangeNotifier {
           await _clear();
         } else if (user == null) {
           // Cannot reach the server and nothing is cached: ask the user to sign in again.
+          token = null;
+        } else {
+          startedOffline = true;
+        }
+      } catch (_) {
+        // Anything unexpected (bad payload, storage failure) must not leave the app stuck on the splash screen.
+        if (user == null) {
           token = null;
         } else {
           startedOffline = true;
@@ -130,7 +139,8 @@ abstract class AuthSession<U> extends ChangeNotifier {
       _finishLogin(await api.post(loginPath, body: {'phone': phone, 'password': password, if (code != null && code.isNotEmpty) 'code': code}));
 
   Future<void> logout() async {
-    await PushService.I.unregister(api, devicesPath);
+    // Best effort and bounded: an unreachable server must not keep a person from signing out.
+    await PushService.I.unregister(api, devicesPath).timeout(const Duration(seconds: 3), onTimeout: () {}).catchError((_) {});
     await _clear();
     await onLogout();
     notifyListeners();
